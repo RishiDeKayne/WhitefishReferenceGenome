@@ -1,2 +1,2 @@
 # WhitefishReferenceGenome
-Scripts used for C. sp. Balchen (whitefish) genome assembly/analysis in De-Kayne, Zoller &amp; Feulner 2019
+Scripts used for Coregonus steinmanni genome assembly/analysis in De-Kayne, Zoller &amp; Feulner 2019

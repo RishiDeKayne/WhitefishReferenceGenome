@@ -1,0 +1,38 @@
+#De-Kayne, Zoller and Feulner 2019 - A de novo chromosome-level genome assembly of #Coregonus sp. “Balchen”: one representative of the Swiss Alpine whitefish radiation
+#assembly of the whitefish genome using canu was carried out with the following parameters:
+canu -correct -p $PREFIX -d $OUTDIR \
+                        useGrid=true gridEngineArrayMaxJobs=5 \
+                        gridOptionsJobName=$jobName \
+                        gridOptions="-W 24:00 -R \"rusage[mem=10000]\" -R lustre "  \
+                        canuIterationMax=1 OvlMerSize=17 MhapMerSize=17 MMapMerSize=17 \
+                        mhapConcurrency=10 mhapThreads=4 mhapMemory=10 \
+                        mmapConcurrency=10 mmapThreads=4 mmapMemory=10 \
+                        ovlConcurrency=10  ovlThreads=4  ovlMemory=10 \
+                        ovsMemory=25 \
+                        genomeSize=4g minReadLength=1000 minOverlapLength=500 -pacbio-raw $PBINFASTQ
+
+Canu assembly parameters:
+canu -trim -p $PREFIX -d $OUTDIR \
+                        useGrid=true gridEngineArrayMaxJobs=5 \
+                        gridOptionsJobName=$jobName \
+                        gridOptions="-W 120:00 -R \"rusage[mem=45000]\" -R lustre "  \
+                        canuIterationMax=1 OvlMerSize=17 MhapMerSize=17 MMapMerSize=17 \
+                        mhapConcurrency=10 mhapThreads=4 mhapMemory=15 \
+                        mmapConcurrency=10 mmapThreads=4 mmapMemory=15 \
+                        ovlConcurrency=10  ovlThreads=4  ovlMemory=15 \
+                        ovsMemory=45 \
+                        genomeSize=4g minReadLength=1000 minOverlapLength=500 -pacbio-corrected $PBcorrected
+
+
+canu -assemble -p $PREFIX -d $OUTDIR \
+                        useGrid=true gridEngineArrayMaxJobs=5 \
+                        gridOptionsJobName=$jobName \
+                        gridOptions="-W 24:00 -R \"rusage[mem=75000]\" -R lustre "  \
+                        ovlMerThreshold=500 \
+                        correctedErrorRate=0.095 corMhapSensitivity=normal \
+                        canuIterationMax=1 OvlMerSize=17 MhapMerSize=17 MMapMerSize=17 \
+                        mhapConcurrency=10 mhapThreads=4 mhapMemory=15 \
+                        mmapConcurrency=10 mmapThreads=4 mmapMemory=15 \
+                        ovlConcurrency=10  ovlThreads=4  ovlMemory=15 \
+                        ovsMemory=45 \
+                        genomeSize=4g minReadLength=1200 minOverlapLength=600 -pacbio-corrected $PBcorrectedTrimmed 

@@ -1,0 +1,22 @@
+#De-Kayne, Zoller and Feulner 2019 - A de novo chromosome-level genome assembly of #Coregonus sp. “Balchen”: one representative of the Swiss Alpine whitefish radiation
+#assembly of the whitefish using falcon was carried out by DNAnexus with the following parameters:
+#REPmask masks repeats, and TANmask masks tandem repeats of a certain length
+#REPmask parameters:
+ -k14 -e0.75 -s100 -l2500 -h240 -w8 
+#TANmask parameters:
+  -k14 -e0.75 -s100 -l2500 -h240 -w8 
+#(-k is kmer length, -e is average correlation rate, -s base pairs of a-read, -l local alignments including at least this number of bp, -h and -w control initial filtration search for possible matches between). 
+
+#Falcon assembly:
+length_cutoff = 5000
+length_cutoff_pr = 5000
+
+pa_HPCdaligner_option =  -k14 -e0.71 -s100 -l2000 -h200 -w8 -M18
+ovlp_HPCdaligner_option =  -k20 -e.96 -s1000 -t32 -l1500 -h256 -M18
+
+pa_DBsplit_option = -x500 -s400
+ovlp_DBsplit_option = -x500 -s400
+
+falcon_sense_option = --min_idt 0.70 --min_cov 4 --max_n_read 200
+
+overlap_filtering_setting = --max_diff 120 --max_cov 120 --min_cov 2 --min_len 500

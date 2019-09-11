@@ -1,0 +1,12 @@
+#De-Kayne, Zoller and Feulner 2019 - A de novo chromosome-level genome assembly of #Coregonus sp. “Balchen”: one representative of the Swiss Alpine whitefish radiation
+#assembly of the whitefish using wtdbg2 was carried out using the following commands:
+#!/bin/bash
+
+module load gcc/4.8.2 
+export PATH=/cluster/project/gdc/shared/tools/wtdbg2:/cluster/project/gdc/shared/tools/wtdbg2/scripts:$PATH
+
+# 1. assemble long reads
+# bsub -n 24 -W48:00 -R "rusage[mem=12000]" "wtdbg2 -t 30 -p 21 -S 3 -s 0.05 -L 5000  -i Cor.combined.fq.gz  -fo p298.wtdbg2.r2 > wtdbg2.r2.log 2> wtdbg2.r2.err "
+
+# 2. derive consensus
+ bsub -n 24 -W48:00 -R "rusage[mem=4000]" "wtpoa-cns -t 30 -i p298.wtdbg2.r2.ctg.lay.gz -fo p298.wtdbg2.r2.ctg.lay.fa  > wtpoa.log 2> wtpoa.err "

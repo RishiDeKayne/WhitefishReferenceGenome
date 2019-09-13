@@ -1,0 +1,157 @@
+#De-Kayne, Zoller and Feulner 2019 - A de novo chromosome-level genome assembly of #Coregonus sp. “Balchen”: one representative of the Swiss Alpine whitefish radiation
+
+#purge haplotigs (https://bitbucket.org/mroachawri/purge_haplotigs) was run on the full falcon assembly (combined p and h files) and the full canu assembly
+
+#make merged falcon assembly and produce all indexes etc.
+cat /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_p_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_h_ctg.renamed_polished.fasta > cns_PandH_ctg.renamed_polished.fasta
+#make bwa index
+bsub -n2 -W 24:00 -R "rusage[mem=20000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta
+#and to sum the third row which is the sum of lengths
+awk '{SUM+=$2}END{print SUM}' /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta.fai
+#--> 4106092877
+#and a picard tools dictionary
+java -jar /cluster/project/gdc/shared/p129/bin/picard.jar CreateSequenceDictionary R=/cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta O=/cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.dict 
+
+#########################
+########################
+#FALCON
+########################
+########################
+#map pacbio reads against full falcon assembly ##--> TOO BIG FOR ALL TO BE DONE IN MINIMAP2: https://github.com/lh3/minimap2/issues/171 ##
+##bsub -n 16 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+##	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > cns_PandH_ctg.renamed_polished.sorted.bam"
+
+#so do each step independently
+#make sam file
+bsub -n 12 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 12 -ax map-pb /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz > headerless.cns_PandH_ctg.renamed_polished.sam"
+
+#then do the sam to bam conversion (from the post: samtools view -b -T ref.fa in.sam > out.bam)
+bsub -n 10 -W 72:00 -R "rusage[mem=5000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; samtools view -b -T /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/headerless.cns_PandH_ctg.renamed_polished.sam > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.bam"
+
+#then sort bam file
+bsub -n4 -W 48:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools sort -@10 -T /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.temp.bam -o /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.sorted.bam -O bam /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.bam"
+
+#and index
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools index -@10 /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.sorted.bam"
+
+#then run purge_haplotigs.lsf
+
+#output:
+#count reads in purged output
+grep ">" curated.fasta | wc -l
+#19412
+#count new haplotigs
+grep ">" curated.haplotigs.fasta | wc -l
+#39501
+#count artefacts i.e. mitochondrial DNA etc.
+grep ">" curated.artefacts.fasta | wc -l
+#1692
+
+#assembly stats:
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+19412	19412	1889	569	84828	281384	897953	6516619	2.465e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta
+
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+#then alter to follow stefans run times i.e. 10 nodes 72 hours 30000 memory and:
+run_BUSCO.py -c 15 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+
+#########################
+########################
+#	CANU
+########################
+########################
+#and with the canu assembly
+bsub -n 16 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > pb_minimapped_to_canu1.6.v2.pilon.iter1.sorted.bam"
+	
+#then ran submit.purge_haplotigs.lsf  
+
+#input:
+grep ">" /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta | wc -l
+#52023
+#output:
+grep ">" curated.fasta | wc -l
+#22627
+grep ">" curated.haplotigs.fasta | wc -l
+#28519
+grep ">" curated.artefacts.fasta | wc -l
+#877
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+22627	22627	1986	1392	69497	258083	876095	5278180	2.461e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+#then alter to follow stefans run times i.e. 10 nodes 72 hours 30000 memory and:
+run_BUSCO.py -c 15 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+#INFO    C:93.1%[S:49.1%,D:44.0%],F:2.2%,M:4.7%,n:4584
+
+#########################
+########################
+#	wtdbg2
+########################
+########################
+module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/project/gdc/shared/p298/Rishi/PrePurgeHaplotigGenomes/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > pb_minimapped_to_wtdbg2.run2.arrow.iter1.pilon.iter1.fasta.sorted.bam
+	
+#then ran submit.purge_haplotigs.lsf  
+grep ">" /cluster/project/gdc/shared/p298/Rishi/PrePurgeHaplotigGenomes/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta | wc -l
+#28224
+
+#output:
+grep ">" curated.fasta | wc -l
+#16440
+grep ">" curated.haplotigs.fasta | wc -l
+#7211
+grep ">" curated.artefacts.fasta | wc -l
+#4573
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+16440	16440	1074	2330	131893	491356	1379796	5201837	2.199e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+#then alter to follow stefans run times i.e. 10 nodes 72 hours 30000 memory and:
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err
+INFO    C:93.1%[S:55.6%,D:37.5%],F:2.2%,M:4.7%,n:4584
+
+#Then each of the Falcon and Canu curated.fastas should be ordered by size and a new suffix added giving read number
+#############CANU
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.ordered.fasta
+
+#http://seqanswers.com/forums/showthread.php?t=58436
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta
+
+#############Falcon
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.ordered.fasta
+
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta
+
+#############wtdbg2
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.ordered.fasta
+
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/wtdbg2.purged.ordered.fasta
+
+#now contigs are ready for scaffolding by Phase Genomics using Hi-C

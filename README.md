@@ -12,7 +12,7 @@ Parameters/submission scripts are included for:
 - PurgeHaplotigs.txt
 - submit.purge_haplotigs.sh
 
-#### Analysis and validation of assemblies (assessing coverage of Illumina data and confirming synteny to linkage map)
+#### Analysis and validation of assemblies (estimation of genome size, assessing coverage of Illumina data and confirming synteny to linkage map)
 - GenomeAssessmentAnalysis.txt
 - PhaseSynteny_FR2.R
 - PhaseSynteny_CR2.R

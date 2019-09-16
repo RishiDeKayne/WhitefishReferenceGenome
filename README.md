@@ -3,25 +3,25 @@ Scripts used for Coregonus sp. "Balchen" genome assembly/analysis in De-Kayne, Z
 
 Parameters/submission scripts are included for:
 
-#### Assembly using Falcon Canu and wtdbg2 
+### Assembly using Falcon Canu and wtdbg2 
 - FalconAssembly.txt - parameters for Falcon assembly by DNA Nexus
 - CanuAssembly.txt - parameters for Canu assembly
 - wtdbg2Assembly.txt - parameters for wtdbg2 assembly
 
-#### Purge_haplotigs
+### Purge_haplotigs
 - PurgeHaplotigs.txt - all commands for purging of haplotigs for each assembly
 - submit.purge_haplotigs.sh - submission script for purge_haplotigs
 
-#### Analysis and validation of assemblies (estimation of genome size, assessing coverage of Illumina data and confirming synteny to linkage map)
+### Analysis and validation of assemblies (estimation of genome size, assessing coverage of Illumina data and confirming synteny to linkage map)
 - GenomeAssessmentAnalysis.txt - all commands run for estimation of genome size and analysis of each genome assembly 
 - PhaseSynteny_FR2.R - R script for coverage and synteny analysis of Falcon assembly
 - PhaseSynteny_CR2.R - R script for coverage and synteny analysis of Canu assembly
 - PhaseSynteny_WR2.R - R script for coverage and synteny analysis of wtdbg2 assembly
 
-#### Repeat masking
+### Repeat masking
 - RepeatAnnotationCommands.txt - all commands for repeat masking of each assembly
 
-#### Annotation
+### Annotation
 - MakerCommands.txt - all commands for MAKER2 annotation of wtdbg2 assembly
 
 parameter files for round one of maker (remove \_r1 to use):

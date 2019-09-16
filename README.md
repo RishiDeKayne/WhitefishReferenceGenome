@@ -13,8 +13,10 @@ Parameters/submission scripts are included for:
 - submit.purge_haplotigs.sh
 
 #### Analysis and validation of assemblies (assessing coverage of Illumina data and confirming synteny to linkage map)
-- shell commands
-- Rscript
+- GenomeAssessmentAnalysis.txt
+- PhaseSynteny_FR2.R
+- PhaseSynteny_CR2.R
+- PhaseSynteny_WR2.R
 
 #### Repeat masking
 - RepeatAnnotationCommands.txt

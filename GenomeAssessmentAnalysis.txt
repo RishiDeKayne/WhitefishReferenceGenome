@@ -1,0 +1,678 @@
+#Genome assessment commands for Coregonus sp. "Balchen" genome - De-Kayne, Zoller and Feulner 2019
+
+####################################################################################################
+######################################################################################################
+#					Jellyfish to estimate genome size
+######################################################################################################
+######################################################################################################
+#check phred encoding
+zcat GenomeIlluminaReads.fastq.gz | head -n 40 | awk '{if(NR%4==0) printf("%s",$0);}' |  od -A n -t u1 | awk 'BEGIN{min=100;max=0;}{for(i=1;i<=NF;i++) {if($i>max) max=$i; if($i<min) min=$i;}}END{if(max<=74 && min<59) print "Phred+33"; else if(max>73 && min>=64) print "Phred+64"; else if(min>=59 && min<64 && max>73) print "Solexa+64"; else print "Unknown score encoding\!";}'
+#make subsample to test script
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load gdc java seqtk; seqtk sample -s100 /cluster/project/gdc/shared/p298/data/22M2_L8_R1_001_chabBdHmXdSk.fastq.gz 10000 > /cluster/scratch/rdekayne/subR1Illumina.fq; seqtk sample -s100 /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fastq.gz 10000 > /cluster/scratch/rdekayne/subR2Illumina.fq ; cat /cluster/scratch/rdekayne/subR1Illumina.fq /cluster/scratch/rdekayne/subR2Illumina.fq > /cluster/scratch/rdekayne/IlluminaSubset.fastq"
+gzip IlluminaSubset.fastq
+
+#generate kmers on subset of data
+bsub -n10 -W 24:00 -R "rusage[mem=2000]" "module load java gdc; gunzip /cluster/scratch/rdekayne/IlluminaSubset.fastq ; /cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish count -t 10 -C -m 25 -s 5G -o spec1_25mer --min-quality=20 --quality-start=33 /cluster/scratch/rdekayne/IlluminaSubset.fastq; gzip /cluster/scratch/rdekayne/IlluminaSubset.fastq"
+
+#make histogram of kmers:
+bsub -W 24:00 -Is /bin/bash
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -o spec1_WHITEFISH_25mer.histo spec1_25mer_0
+
+#now do all of this for the full dataset:
+bsub -n10 -W 120:00 -R "rusage[mem=2000]" "module load java gdc; gunzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq.gz ; /cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish count -t 10 -C -m 25 -s 7G -o spec1_25mer --min-quality=20 --quality-start=33 /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq; gzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq"
+bsub -n10 -W 120:00 -R "rusage[mem=2000]" "module load java gdc; gunzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq.gz ; /cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish count -t 10 -C -m 21 -s 7G -o spec1_21mer --min-quality=20 --quality-start=33 /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq; gzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq"
+bsub -n10 -W 120:00 -R "rusage[mem=2000]" "module load java gdc; gunzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq.gz ; /cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish count -t 10 -C -m 17 -s 7G -o spec1_17mer --min-quality=20 --quality-start=33 /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq; gzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq"
+bsub -n10 -W 120:00 -R "rusage[mem=2000]" "module load java gdc; gunzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq.gz ; /cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish count -t 10 -C -m 30 -s 7G -o spec1_30mer --min-quality=20 --quality-start=33 /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq; gzip /cluster/project/gdc/shared/p298/data/GenomeIlluminaReads.fastq"
+
+
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -o spec1_25mer.histo spec1_25mer_0
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -o spec1_WHITEFISH_21mer.histo spec1_21mer_0
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -o spec1_WHITEFISH_17mer.histo spec1_17mer_0
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -o spec1_WHITEFISH_30mer.histo spec1_30mer_0
+
+#trying suggestion from GenomeScope for whitefish k=25, -h 1000000
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -h 1000000 -o spec1_25mer_H.histo spec1_25mer_0
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -h 10000000 -o spec1_25mer_HH.histo spec1_25mer_0
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -h 10000000 -o spec1_WHITEFISH_21mer_H.histo spec1_21mer_0;
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -h 10000000 -o spec1_WHITEFISH_17mer_H.histo spec1_17mer_0;
+/cluster/apps/gdc/jellyfish/1.1.11/bin/jellyfish histo -h 10000000 -o spec1_WHITEFISH_30mer_H.histo spec1_30mer_0
+
+########################################################################################################################################################
+########################################################################################################################################################
+#
+#								Pre-PURGE HAPLOTIGS genome statistics
+########################################################################################################################################################
+########################################################################################################################################################
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+
+#raw falcon
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_p_ctg.renamed_polished.fasta
+19553	19553	1825	10777	78160	279657	908656	6516619	2.412e9	
+
+#merged falcon assembly
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta
+60605	60605	5828	569	38612	136418	567511	6516619	4.106e9
+
+#canu assembly
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta
+52023	52023	4228	1200	36907	130955	669827	5278180	3.276e9
+
+#wtdbg2 assembly
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+28224	28224	1276	1722	82666	424474	1285210	5201837	2.385e9	/cluster/project/gdc/shared/p298/WhitefishRef/wtdbg2Assembly_run2/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta
+
+########################################################################################################################################################
+########################################################################################################################################################
+#
+#								PURGE HAPLOTIGS
+########################################################################################################################################################
+########################################################################################################################################################
+#want to map all pacbio reads to complete DNAnexus assembly using minimap
+#make merged assembly
+cat /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_p_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_h_ctg.renamed_polished.fasta > cns_PandH_ctg.renamed_polished.fasta
+#make bwa index
+bsub -n2 -W 24:00 -R "rusage[mem=20000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta
+#and to sum the third row which is the sum of lengths
+awk '{SUM+=$2}END{print SUM}' /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta.fai
+#--> 4106092877
+#and a picard tools dictionary
+java -jar /cluster/project/gdc/shared/p129/bin/picard.jar CreateSequenceDictionary R=/cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta O=/cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.dict 
+
+#same for wtdbg2
+#make bwa index
+bsub -n2 -W 24:00 -R "rusage[mem=20000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/scratch/rdekayne/wtdbg2Assembly/wtdbg2.pilon.iter1.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/scratch/rdekayne/wtdbg2Assembly/wtdbg2.pilon.iter1.fasta
+#and to sum the third row which is the sum of lengths
+awk '{SUM+=$2}END{print SUM}' /cluster/scratch/rdekayne/wtdbg2Assembly/wtdbg2.pilon.iter1.fasta.fai
+#--> 2534969367
+#and a picard tools dictionary
+java -jar /cluster/project/gdc/shared/p129/bin/picard.jar CreateSequenceDictionary R=/cluster/scratch/rdekayne/wtdbg2Assembly/wtdbg2.pilon.iter1.fasta O=/cluster/scratch/rdekayne/wtdbg2Assembly/wtdbg2.pilon.iter1.dict
+
+#########################
+########################
+#	FULL FALCON
+########################
+########################
+#map pacbio reads against full falcon assembly ## TOO BIG FOR ALL TO BE DONE IN MINIMAP2: https://github.com/lh3/minimap2/issues/171 ##
+#bsub -n 16 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+#	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > cns_PandH_ctg.renamed_polished.sorted.bam"
+
+#make sam file
+bsub -n 12 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 12 -ax map-pb /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz > headerless.cns_PandH_ctg.renamed_polished.sam"
+
+#then do the sam to bam conversion (from the post: samtools view -b -T ref.fa in.sam > out.bam)
+bsub -n 10 -W 72:00 -R "rusage[mem=5000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; samtools view -b -T /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/headerless.cns_PandH_ctg.renamed_polished.sam > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.bam"
+
+#then sort bam file
+bsub -n4 -W 48:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools sort -@10 -T /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.temp.bam -o /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.sorted.bam -O bam /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.bam"
+
+#and index
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools index -@10 /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/cns_PandH_ctg.renamed_polished.sorted.bam"
+
+#then run purge_haplotigs.lsf
+
+#changed parameters to mid-55 not 50
+#output:
+grep ">" curated.fasta | wc -l
+#19412
+grep ">" curated.haplotigs.fasta | wc -l
+#39501
+grep ">" curated.artefacts.fasta | wc -l
+#1692
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+19412	19412	1889	569	84828	281384	897953	6516619	2.465e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta
+
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+#then alter to follow stefans run times i.e. 10 nodes 72 hours 30000 memory and:
+run_BUSCO.py -c 15 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+#INFO    C:90.8%[S:43.6%,D:47.2%],F:2.4%,M:6.8%,n:4584
+
+
+#########################
+########################
+#	CANU
+########################
+########################
+#and with the canu assembly
+bsub -n 16 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > pb_minimapped_to_canu1.6.v2.pilon.iter1.sorted.bam"
+	
+#then ran submit.purge_haplotigs.lsf  in /Falcon and then /Canu
+
+#input:
+grep ">" /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta | wc -l
+#52023
+grep ">" curated.fasta | wc -l
+#22627
+grep ">" curated.haplotigs.fasta | wc -l
+#28519
+#grep ">" curated.artefacts.fasta | wc -l
+877
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+22627	22627	1986	1392	69497	258083	876095	5278180	2.461e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+#then alter to follow stefans run times i.e. 10 nodes 72 hours 3000 memory and:
+run_BUSCO.py -c 15 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+#INFO    C:93.1%[S:49.1%,D:44.0%],F:2.2%,M:4.7%,n:4584
+
+#########################
+########################
+#  WTDBG2
+########################
+########################
+#and with the canu assembly
+bsub -n 16 -W 48:00 -R "rusage[mem=10000]" "module load gcc/4.8.2 gdc perl/5.18.4 minimap2/2.12 samtools/1.2 ; minimap2 -t 10 -ax map-pb /cluster/project/gdc/shared/p298/Rishi/PrePurgeHaplotigGenomes/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta /cluster/project/gdc/shared/p298/data/PacBio/SMRTfastas/Cor.combined.fq.gz \
+	| samtools view -hu -F 4 -@10 - | samtools sort -m 2G -@10 -o - - > pb_minimapped_to_wtdbg2.run2.arrow.iter1.pilon.iter1.fasta.sorted.bam"
+	
+#running
+#then purge haplotigs script
+	
+#10 - 55 - 120
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+
+grep ">" /cluster/project/gdc/shared/p298/Rishi/PrePurgeHaplotigGenomes/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta | wc -l
+#28224
+grep ">" curated.fasta | wc -l
+#16440
+grep ">" curated.haplotigs.fasta | wc -l
+#7211
+grep ">" curated.artefacts.fasta | wc -l
+#4573
+
+
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta
+16440	16440	1074	2330	131893	491356	1379796	5201837	2.199e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta
+
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+#INFO    C:93.1%[S:55.6%,D:37.5%],F:2.2%,M:4.7%,n:4584
+	
+#############CANU
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.ordered.fasta
+
+#http://seqanswers.com/forums/showthread.php?t=58436
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta
+
+#############Falcon
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.ordered.fasta
+
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta
+
+
+############# wtdbg2_run2
+awk '/^>/ {printf("%s%s\t",(N>0?"\n":""),$0);N++;next;} {printf("%s",$0);} END {printf("\n");}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.fasta |\
+awk -F '\t' '{printf("%d\t%s\n",length($2),$0);}' |\
+sort -k1,1nr | cut -f 2- | tr "\t" "\n" > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.ordered.fasta
+
+awk '{if (/^>/) print ">Contig_"(++i)"." substr($0,2); else print $0;}'  /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/curated.ordered.fasta > /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/wtdbg2.purged.ordered.fasta
+
+
+#now do coverage with each:
+#make bwa index FALCON
+bsub -n2 -W 24:00 -R "rusage[mem=20000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta
+#and to sum the third row which is the sum of lengths
+awk '{SUM+=$2}END{print SUM}' /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta.fai
+#--> 2465483929
+#and a picard tools dictionary
+java -jar /cluster/project/gdc/shared/p129/bin/picard.jar CreateSequenceDictionary R=/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta O=/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta.dict 
+
+#make bwa index CANU
+bsub -n2 -W 24:00 -R "rusage[mem=20000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta
+#and to sum the third row which is the sum of lengths
+awk '{SUM+=$2}END{print SUM}' /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta.fai
+#--> 2461144876
+#and a picard tools dictionary
+java -jar /cluster/project/gdc/shared/p129/bin/picard.jar CreateSequenceDictionary R=/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta O=/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta.dict 
+
+
+
+###########################################################################################################
+###########################################################################################################
+#						POST SCAFFOLDING
+###########################################################################################################
+###########################################################################################################
+
+############################################################################################################
+
+#Canu and Falcon run by phase to improve quality--
+#testing fasta from phase genomics - Falcon_RUN2
+mv PGA_assembly_Falcon_RUN2.fasta WF_FalconR2.chr.fasta
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+3745	3745	16	569	50.94e6	62.84e6	87.8e6	111.3e6	2.465e9	/cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta
+
+module load gdc java
+module load gcc/4.8.2 gdc blast fastx_toolkit/0.0.14
+fasta_formatter -w 0 -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta -o /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.oneline.chr.fasta
+mkdir /cluster/scratch/rdekayne/PG_testFR2
+head -80 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.oneline.chr.fasta > /cluster/scratch/rdekayne/PG_testFR2/WF_FalconR2.chroms.fasta
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PG_testFR2/WF_FalconR2.chroms.fasta
+40	40	15	9363809	52.46e6	62.97e6	87.8e6	111.3e6	2.38e9	/cluster/scratch/rdekayne/PG_testFR2/WF_FalconR2.chroms.fasta
+
+awk '{ print length }' /cluster/scratch/rdekayne/PG_testFR2/WF_FalconR2.chroms.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_Falcon.chr.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+
+############################################################################################################
+#testing fasta from phase genomics - Canu_RUN2
+mv PGA_assembly_CANU_RUN2.fasta WF_CanuR2.chr.fasta
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+3553	3553	17	999	49.48e6	59.34e6	71.69e6	104e6	2.461e9	/cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta
+
+module load gdc java
+module load gcc/4.8.2 gdc blast fastx_toolkit/0.0.14
+fasta_formatter -w 0 -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta -o /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.oneline.chr.fasta
+mkdir /cluster/scratch/rdekayne/PG_testCR2
+head -80 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.oneline.chr.fasta > /cluster/scratch/rdekayne/PG_testCR2/WF_CanuR2.chroms.fasta
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PG_testCR2/WF_CanuR2.chroms.fasta
+40	40	17	39.22e6	49.73e6	59.34e6	71.69e6	104e6	2.406e9	/cluster/scratch/rdekayne/PG_testCR2/WF_CanuR2.chroms.fasta
+
+awk '{ print length }' /cluster/scratch/rdekayne/PG_testCR2/WF_CanuR2.chroms.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_Canu.chr.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+
+############################################################################################################
+#testing fasta from phase genomics - wtdbg2
+mv PGA_assembly.fasta PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta
+bsub -W 24:00 -Is /bin/bash
+module load gdc java perl
+perl-init
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+7855	7855	18	999	43.65e6	51.93e6	63.86e6	93.42e6	2.199e9	/cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta
+
+module load gdc java
+module load gcc/4.8.2 gdc blast fastx_toolkit/0.0.14
+fasta_formatter -w 0 -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta -o /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.oneline.chr.fasta
+head -80 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.oneline.chr.fasta > /cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta
+40	40	17	1094005	44.6e6	52e6	63.86e6	93.42e6	2.067e9	/cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta
+
+
+awk '{ print length }' /cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta
+
+#and now busco:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta   -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+# analysis of post phase FalconR2 coverage with SA linkage map
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+#map SA map to see similarities first make index for hi-c scaffolded falcon
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta
+
+mkdir /cluster/scratch/rdekayne/FalconSyntenyR2
+bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 10 module load java gdc bwa/0.7.17; bwa mem -t 10 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta /cluster/project/gdc/shared/p298/Rishi/LinkageMap/SpeciesAveragedMap.fasta > /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped.sam"
+
+#filter falcon linkage map for mapping scores over 0 and remove headers:
+awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped.sam > /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped_UnFiltered.txt
+awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped.sam > /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped_Filtered.txt
+
+#3714/5385 map well
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+# analysis of post phase CanuR2 coverage with SA linkage map
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+
+#map SA map to see similarities first make indices for linkage map scaffolded canu and hi-c scaffolded canu
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta
+
+mkdir /cluster/scratch/rdekayne/CanuSyntenyR2
+bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 10 module load java gdc bwa/0.7.17; bwa mem -t 10 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta /cluster/project/gdc/shared/p298/Rishi/LinkageMap/SpeciesAveragedMap.fasta > /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped.sam"
+
+#filter canu linkage map for mapping scores over 0 and remove headers:
+awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped.sam > /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped_UnFiltered.txt
+awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped.sam > /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped_Filtered.txt
+
+#4539/5395 map well
+
+
+###########################################################################################################
+###########################################################################################################
+# analysis of post phase wtdbg2 coverage with SA linkage map
+###########################################################################################################
+###########################################################################################################
+
+#map SA map to see similarities first make index for hi-c scaffolded falcon
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc module load bwa/0.7.17; bwa index -a bwtsw /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta"
+#now to make a samtools index of fasta: contig name, size, location, basesPerLine and bytesPerLine
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools faidx /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta
+
+bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 10 module load java gdc bwa/0.7.17; bwa mem -t 10 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta /cluster/project/gdc/shared/p298/Rishi/LinkageMap/SpeciesAveragedMap.fasta > /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped.sam"
+
+#filter falcon linkage map for mapping scores over 0 and remove headers:
+awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped.sam > /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped_UnFiltered.txt
+awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped.sam > /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped_Filtered.txt
+
+#4814/5395 map well
+
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+# analysis of post phase Falcon - RUN2 coverage with Illumina data
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+#now map illumina data to assembly
+bsub -n16 -W 48:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 16 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta /cluster/project/gdc/shared/p298/data/22M2_L8_R1_001_chabBdHmXdSk.fastq.gz /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fastq.gz > /cluster/scratch/rdekayne/Maptest.WF_FalconR2.chr.fasta_aln.sam"
+bsub -n4 -W 48:00 -R "rusage[mem=10000]" "module load java gdc samtools ;samtools view -S -b -@ 4 /cluster/scratch/rdekayne/Maptest.WF_FalconR2.chr.fasta_aln.sam > /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.bam"
+
+#look at mapping summary
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools flagstat /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.bam
+
+593020290 + 0 in total (QC-passed reads + QC-failed reads)
+0 + 0 secondary
+14593712 + 0 supplementary
+0 + 0 duplicates
+572316621 + 0 mapped (96.51% : N/A)
+578426578 + 0 paired in sequencing
+289213289 + 0 read1
+289213289 + 0 read2
+507353484 + 0 properly paired (87.71% : N/A)
+550434884 + 0 with itself and mate mapped
+7288025 + 0 singletons (1.26% : N/A)
+36913386 + 0 with mate mapped to a different chr
+11671519 + 0 with mate mapped to a different chr (mapQ>=5)
+
+#check mapping qualities over 30
+module load sambamba
+sambamba view -S -c -F "mapping_quality >= 30" /cluster/scratch/rdekayne/Maptest.WF_FalconR2.chr.fasta_aln.sam 
+#347556473
+sambamba view -S -c -F "mapping_quality >= 0" /cluster/scratch/rdekayne/Maptest.WF_FalconR2.chr.fasta_aln.sam 
+#593020290
+
+#347555124/593021113 59%
+
+#sort
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools sort -@ 4 -T /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.temp.bam -o /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.sorted.bam -O bam /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.bam"
+#index
+bsub -n4 -W 10:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools index -@ 4 /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.sorted.bam"
+
+bsub -n 1 -W 48:00 -R "rusage[mem=20000]" "module load gdc java bedtools; bedtools genomecov -d -ibam /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.sorted.bam | gzip -c > /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.sorted.bam.txt.gz"
+bsub -n1 -W 4:00 "/cluster/project/gdc/shared/p298/Rishi/scripts/cov.per.window.pl  /cluster/scratch/rdekayne/Maptest/WF_FalconR2.chr.fasta_aln.sorted.bam.txt.gz 30000 | gzip > FalconR2_Phase30kb.cov.gz"
+
+bsub -W 24:00 -Is /bin/bash
+zcat FalconR2_Phase30kb.cov.gz | awk '{ if (($2/30000) == (int(($2/30000))) ) { print } }' | tr -s '[:blank:]' ',' > FalconR2_Phase30kb_windows.csv
+grep "_scaffold" FalconR2_Phase30kb_windows.csv > FalconR2_Phase30kb_windows_scaffolds.csv
+
+fgrep -o n WF_Falcon.chroms.fasta | wc -l
+#1589980
+grep ">" WF_Falcon.chroms.fasta > Ffastaheadings.txt
+fgrep -o n Ffastaheadings.txt | wc -l
+#80
+fgrep -o N WF_Falcon.chroms.fasta | wc -l
+#4
+fgrep -o N Ffastaheadings.txt | wc -l
+#0
+
+#out of R PhaseSynteny_FR2.R
+> cov_mean
+[1] 14.99976
+> cov_summary_low
+[1] 18141
+> cov_summary_mid
+[1] 54987
+> cov_summary_high
+[1] 6238
+> cov_total
+[1] 79366
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+# analysis of post phase Canu RUN2 coverage with Illumina data
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+#now map illumina data to assembly
+bsub -n16 -W 48:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 16 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta /cluster/project/gdc/shared/p298/data/22M2_L8_R1_001_chabBdHmXdSk.fastq.gz /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fastq.gz > /cluster/scratch/rdekayne/Maptest.WF_CanuR2.chr.fasta_aln.sam"
+bsub -n4 -W 48:00 -R "rusage[mem=10000]" "module load java gdc samtools ;samtools view -S -b -@ 4 /cluster/scratch/rdekayne/Maptest.WF_CanuR2.chr.fasta_aln.sam > /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.bam"
+
+#look at mapping summary
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools flagstat /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.bam
+587350588 + 0 in total (QC-passed reads + QC-failed reads)
+0 + 0 secondary
+8924010 + 0 supplementary
+0 + 0 duplicates
+579664797 + 0 mapped (98.69% : N/A)
+578426578 + 0 paired in sequencing
+289213289 + 0 read1
+289213289 + 0 read2
+538808158 + 0 properly paired (93.15% : N/A)
+566626910 + 0 with itself and mate mapped
+4113877 + 0 singletons (0.71% : N/A)
+22517246 + 0 with mate mapped to a different chr
+8345236 + 0 with mate mapped to a different chr (mapQ>=5)
+
+#check mapping qualities over 30
+module load sambamba
+sambamba view -S -c -F "mapping_quality >= 30" /cluster/scratch/rdekayne/Maptest.WF_CanuR2.chr.fasta_aln.sam 
+#402701783
+sambamba view -S -c -F "mapping_quality >= 0" /cluster/scratch/rdekayne/Maptest.WF_CanuR2.chr.fasta_aln.sam 
+#587350588
+
+#Old 402707187/587351042 69%
+
+#sort
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools sort -@ 4 -T /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.temp.bam -o /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.sorted.bam -O bam /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.bam"
+#index
+bsub -n4 -W 10:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools index -@ 4 /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.sorted.bam"
+
+bsub -n 1 -W 48:00 -R "rusage[mem=20000]" "module load gdc java bedtools; bedtools genomecov -d -ibam /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.sorted.bam | gzip -c > /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.sorted.bam.txt.gz"
+bsub -n1 -W 4:00 "/cluster/project/gdc/shared/p298/Rishi/scripts/cov.per.window.pl  /cluster/scratch/rdekayne/Maptest/WF_CanuR2.chr.fasta_aln.sorted.bam.txt.gz 30000 | gzip > CanuR2_Phase30kb.cov.gz"
+
+bsub -W 24:00 -Is /bin/bash
+zcat CanuR2_Phase30kb.cov.gz | awk '{ if (($2/30000) == (int(($2/30000))) ) { print } }' | tr -s '[:blank:]' ',' > CanuR2_Phase30kb_windows.csv
+grep "_scaffold" CanuR2_Phase30kb_windows.csv > CanuR2_Phase30kb_windows_scaffolds.csv
+
+
+fgrep -o n WF_Canu.chroms.fasta | wc -l
+#1921280
+grep ">" WF_Canu.chroms.fasta > fastaheadings.txt
+fgrep -o n fastaheadings.txt | wc -l
+#80
+fgrep -o N WF_Canu.chroms.fasta | wc -l
+#1
+fgrep -o N fastaheadings.txt | wc -l
+#0
+
+
+#out of R PhaseSynteny_CR2.R
+> cov_mean
+[1] 15.89349
+> cov_summary_low
+[1] 7017
+> cov_summary_mid
+[1] 66188
+> cov_summary_high
+[1] 7032
+> cov_total
+[1] 80237
+
+
+###########################################################################################################
+###########################################################################################################
+# analysis of post phase wtdbg2 coverage with Illumina data
+###########################################################################################################
+###########################################################################################################
+#now map illumina data to assembly
+bsub -n16 -W 48:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa mem -t 16 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta /cluster/project/gdc/shared/p298/data/22M2_L8_R1_001_chabBdHmXdSk.fastq.gz /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fastq.gz > /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sam"
+bsub -n4 -W 48:00 -R "rusage[mem=10000]" "module load java gdc samtools ;samtools view -S -b /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sam > /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.bam"
+
+#look at mapping summary
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+samtools flagstat /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.bam
+592632048 + 0 in total (QC-passed reads + QC-failed reads)
+0 + 0 secondary
+14205470 + 0 supplementary
+0 + 0 duplicates
+584498965 + 0 mapped (98.63% : N/A)
+578426578 + 0 paired in sequencing
+289213289 + 0 read1
+289213289 + 0 read2
+526078948 + 0 properly paired (90.95% : N/A)
+566257504 + 0 with itself and mate mapped
+4035991 + 0 singletons (0.70% : N/A)
+33788892 + 0 with mate mapped to a different chr
+14053664 + 0 with mate mapped to a different chr (mapQ>=5)
+
+#check mapping qualities over 30
+module load sambamba
+sambamba view -S -c -F "mapping_quality >= 30" /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sam
+#418284790
+
+#418284790/592632048 70.6%
+
+#sort
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools sort -T /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.temp.bam -o /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sorted.bam -O bam /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.bam"
+#index
+bsub -n4 -W 10:00 -R "rusage[mem=10000]" "module load java gdc samtools sambamba/0.6.6; samtools index /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sorted.bam"
+
+bsub -n 1 -W 48:00 -R "rusage[mem=20000]" "module load gdc java bedtools; bedtools genomecov -d -ibam /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sorted.bam | gzip -c > /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sorted.bam.txt.gz"
+bsub -n1 -W 4:00 "/cluster/project/gdc/shared/p298/Rishi/scripts/cov.per.window.pl  /cluster/scratch/rdekayne/Maptest/WF_wtdbg2.chr.fasta_aln.sorted.bam.txt.gz 30000 | gzip > wtdbg2_Phase30kb.cov.gz"
+
+bsub -W 24:00 -Is /bin/bash
+zcat wtdbg2_Phase30kb.cov.gz | awk '{ if (($2/30000) == (int(($2/30000))) ) { print } }' | tr -s '[:blank:]' ',' > wtdbg2_Phase30kb_windows.csv
+grep "_scaffold" wtdbg2_Phase30kb_windows.csv > wtdbg2_Phase30kb_windows_scaffolds.csv
+
+fgrep -o n /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta | wc -l
+#886451
+grep ">" /cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta > wfastaheadings.txt
+fgrep -o n wfastaheadings.txt | wc -l
+#80
+fgrep -o N /cluster/scratch/rdekayne/PG_testW/WF_wtdbg2.chroms.fasta | wc -l
+#4
+fgrep -o N wfastaheadings.txt | wc -l
+#0
+
+#out of R PhaseSynteny_WR2.R
+> cov_mean
+[1] 17.30452
+> cov_summary_low
+[1] 1916
+> cov_summary_mid
+[1] 57172
+> cov_summary_high
+[1] 9828
+> cov_total
+[1] 68916
+
+
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+###########################################################################################################
+
+#summary stats
+##PRE
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta
+60605	60605	5828	569	38612	136418	567511	6516619	4.106e9
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/WhitefishRef/DNAnexusFirstAssembly/cns_p_ctg.renamed_polished.fasta
+19553	19553	1825	10777	78160	279657	908656	6516619	2.412e9	
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta
+52023	52023	4228	1200	36907	130955	669827	5278180	3.276e9
+n	n:500	n:N50	min	N80	N50	N20	max	sum
+28224	28224	1276	1722	82666	424474	1285210	5201837	2.385e9	/cluster/project/gdc/shared/p298/WhitefishRef/wtdbg2Assembly_run2/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta
+
+##POST
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/FullFalcon/Run2/Falcon.purged.ordered.fasta
+19412	19412	1889	569	84828	281384	897953	6516619	2.465e9
+
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/Canu/Canu.purged.ordered.fasta
+22627	22627	1986	1392	69497	258083	876095	5278180	2.461e9
+
+/cluster/project/gdc/shared/scripts/scripts/abyss-fac /cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/wtdbg2.purged.ordered.fasta
+16440	16440	1074	2330	131893	491356	1379796	5201837	2.199e9	/cluster/scratch/rdekayne/PurgeHaplos_test/Minimap2/wtdbg2_run2/wtdbg2.purged.ordered.fasta
+
+
+echo $(zcat /cluster/project/gdc/shared/p298/data/22M2_L8_R1_001_chabBdHmXdSk.fastq.gz|wc -l)/4|bc
+#289213289
+echo $(zcat /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fastq.gz|wc -l)/4|bc
+#289213289
+
+#genome online at ENA:
+Sample	ERS3595991 (SAMEA5807383) AWG_v1_sample1

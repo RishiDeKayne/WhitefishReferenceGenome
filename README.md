@@ -21,8 +21,15 @@ Parameters/submission scripts are included for:
 ### Analysis and validation of assemblies (estimation of genome size, assessing coverage of Illumina data and confirming synteny to linkage map)
 - GenomeAssessmentAnalysis.txt - all commands run for estimation of genome size and analysis of each genome assembly 
 - PhaseSynteny_FR2.R - R script for coverage and synteny analysis of Falcon assembly
+  - FalconR2ChromosomeLenghts.txt - falcon assembly chromosome lengths
+  - SA_linkagemap_FalconR2PhaseMapped_Filtered.csv
 - PhaseSynteny_CR2.R - R script for coverage and synteny analysis of Canu assembly
+  - CanuR2ChromosomeLenghts.txt - falcon assembly chromosome lengths
+  - SA_linkagemap_CanuR2PhaseMapped_Filtered.csv
 - PhaseSynteny_WR2.R - R script for coverage and synteny analysis of wtdbg2 assembly
+  - wtdbg2ChromosomeLenghts.txt - falcon assembly chromosome lengths
+  - SA_linkagemap_Wtdbg2PhaseMapped_Filtered.csv
+ - LM_stats.txt
 
 ***
 

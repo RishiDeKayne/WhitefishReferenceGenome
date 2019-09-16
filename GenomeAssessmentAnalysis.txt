@@ -368,7 +368,7 @@ bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa me
 awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped.sam > /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped_UnFiltered.txt
 awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped.sam > /cluster/scratch/rdekayne/FalconSyntenyR2/SA_linkagemap_FalconR2PhaseMapped_Filtered.txt
 
-#3714/5385 map well
+#3713/5385 map well
 
 ###########################################################################################################
 ###########################################################################################################
@@ -395,7 +395,7 @@ bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa me
 awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped.sam > /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped_UnFiltered.txt
 awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped.sam > /cluster/scratch/rdekayne/CanuSyntenyR2/SA_linkagemap_CanuR2PhaseMapped_Filtered.txt
 
-#4539/5395 map well
+#4538/5395 map well
 
 
 ###########################################################################################################
@@ -417,7 +417,7 @@ bsub -n10 -W 4:00 -R "rusage[mem=3000]" "module load java gdc bwa/0.7.17; bwa me
 awk '{ if($5 >= 0) {print}}' /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped.sam > /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped_UnFiltered.txt
 awk '{ if($5 > 30) {print}}' /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped.sam > /cluster/scratch/rdekayne/Wtdbg2Synteny/SA_linkagemap_Wtdbg2PhaseMapped_Filtered.txt
 
-#4814/5395 map well
+#4813/5395 map well
 
 
 ###########################################################################################################

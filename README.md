@@ -3,7 +3,7 @@ Scripts used for Coregonus sp. "Balchen" genome assembly/analysis in De-Kayne, Z
 
 Parameters/submission scripts are included for:
 
-### Assembly using Falcon Canu and wtdbg2 
+#### Assembly using Falcon Canu and wtdbg2 
 - FalconAssembly.txt
 - CanuAssembly.txt
 - wtdbg2Assembly.txt

@@ -1,0 +1,71 @@
+#commands for repeat masking scaffolded Coregonus sp. "Balchen" genome assemblies from De-Kayne, Zoller and Feulner 2019
+
+#use each 'raw' assembly to build repeat database from each assembly
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; BuildDatabase -name WF_RMFalcon /cluster/scratch/rdekayne/CompleteDNAnexusAssembly/cns_PandH_ctg.renamed_polished.fasta"
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; BuildDatabase -name WF_RMCanu /cluster/project/gdc/shared/p298/WhitefishRef/CanuAssembly/canu1.6.v2.pilon.iter1.fasta"
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; BuildDatabase -name WF_RMwtdbg2 /cluster/project/gdc/shared/p298/Rishi/PrePurgeHaplotigGenomes/wtdbg2.run2.arrow.iter1.pilon.iter1.fasta"
+
+
+bsub -n12 -W 100:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; RepeatModeler -pa 12 -database WF_RMFalcon >& run1.out"
+bsub -n12 -W 100:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; RepeatModeler -pa 12 -database WF_RMCanu >& run1.out"
+bsub -n12 -W 100:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 ; RepeatModeler -pa 12 -database WF_RMwtdbg2 >& run1.out"
+
+#also get RepeatDatabase TEs:
+perl /cluster/apps/gdc/repeatmasker/4.0.7/util/queryRepeatDatabase.pl -species Salmonidae > /cluster/scratch/rdekayne/RepLibraries/SalmonidaeRepbase.lib
+#has 276 seqs
+#perl /cluster/apps/gdc/repeatmasker/4.0.7/util/queryRepeatDatabase.pl -species Salmo > /cluster/scratch/rdekayne/RepLibraries/SalmoRepbase.lib
+#has 268 seqs
+#perl /cluster/apps/gdc/repeatmasker/4.0.7/util/queryRepeatDatabase.pl -species Thymallus > /cluster/scratch/rdekayne/RepLibraries/ThymallusRepbase.lib
+#has 261 seqs
+#perl /cluster/apps/gdc/repeatmasker/4.0.7/util/queryRepeatDatabase.pl -species Salvelinus > /cluster/scratch/rdekayne/RepLibraries/SalvelinusRepbase.lib
+#has 262 seqs
+
+#now loop through all and remove header line
+for filename in ./*.lib; do
+	tail -n +2 "$filename" > "$filename.tmp" && mv "$filename.tmp" "$filename"
+done
+
+#concatenate Salmonidae repbase library and homemade whitefish libraries:
+cat /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/RepLibraries/SalmonidaeRepbase.lib /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WFCompleteRepeats/WF_RMCanu-families.fa  /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WFCompleteRepeats/WF_RMFalcon-families.fa /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WFCompleteRepeats/WF_RMwtdbg2-families.fa > /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WF_CFW_and_Salmonidae_repeats.lib
+#6782 seqs
+
+
+########################################################################################################
+########################################################################################################
+#
+#				now run on complete repeat masker db 
+#
+########################################################################################################
+########################################################################################################
+
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc; cut -d '.' -f1 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.fasta > /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.headertrimmed.fasta"
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc; cut -d '.' -f1 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.fasta > /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.headertrimmed.fasta"
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc; cut -d '.' -f1 /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.fasta > /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.headertrimmed.fasta"
+
+#fasta headings can cause issues so rename 1-n
+awk '/^>/{print ">" ++i; next}{print}' < /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_CanuR2.chr.headertrimmed.fasta > renamed_canuR2.fasta
+awk '/^>/{print ">" ++i; next}{print}' < /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_FalconR2.chr.headertrimmed.fasta > renamed_falconR2.fasta
+awk '/^>/{print ">" ++i; next}{print}' < /cluster/project/gdc/shared/p298/Rishi/PostPhaseScaffoldingGenomes/WF_wtdbg2.chr.headertrimmed.fasta > renamed_wtdbg2.fasta
+
+#Run repeat masker
+bsub -n10 -W 24:00 -R "rusage[mem=5000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; RepeatMasker -pa 10 -a -xsmall -gccalc -lib /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WF_CFW_and_Salmonidae_repeats.lib /cluster/scratch/rdekayne/TE_masking_Full/renamed_canuR2.fasta" 
+bsub -n10 -W 24:00 -R "rusage[mem=5000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; RepeatMasker -pa 10 -a -xsmall -gccalc -lib /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WF_CFW_and_Salmonidae_repeats.lib /cluster/scratch/rdekayne/TE_masking_Full/renamed_falconR2.fasta" 
+bsub -n10 -W 24:00 -R "rusage[mem=5000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; RepeatMasker -pa 10 -a -xsmall -gccalc -lib /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WF_CFW_and_Salmonidae_repeats.lib /cluster/scratch/rdekayne/TE_masking_Full/renamed_wtdbg2.fasta" 
+
+#now to get repeat landscapes:
+
+#calcDivergenceFromAlign.pl
+#./calcDivergenceFromAlign.pl -s example.divsum -a example_with_div.align example.align.gz
+bsub -W 24:00 -Is /bin/bash
+module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7 perl
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/calcDivergenceFromAlign.pl -s testW.divsum renamed_wtdbg2.fasta.align"
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/calcDivergenceFromAlign.pl -s testF.divsum renamed_falconR2.fasta.align"
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/calcDivergenceFromAlign.pl -s testC.divsum renamed_canuR2.fasta.align"
+
+#then
+#./createRepeatLandscape.pl -div example.divsum > /home/user/public_html/example.html
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/createRepeatLandscape.pl -div testW.divsum -g 2199487513 > test_w_output.html"
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/createRepeatLandscape.pl -div testF.divsum -g 2467073637 > test_f_output.html"
+bsub -n1 -W 4:00 -R "rusage[mem=10000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; /cluster/apps/gdc/repeatmasker2/4.0.6/util/createRepeatLandscape.pl -div testC.divsum -g 2463065978 > test_c_output.html"
+
+

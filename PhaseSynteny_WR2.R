@@ -13,7 +13,7 @@ samfile <- read.csv(file = "/Users/rishidek/Dropbox/RishiMAC/Genome/ScaffoldedSy
 samfile <- subset(samfile, as.character(samfile$PN.bwa) == "PGA")
 
 #make synteny map structure file with each linkage group/chromosome and start and end
-#find equivalent chromosomes
+#find equivalent chromosomes e.g. synteny by finding the scaffold with the most mappings from each linkage group
 for (i in 1:40){
   linkagegroup <- levels(lm$V1)[i]
   new_linkagegroup <- gsub("Calb", "SA", linkagegroup)
@@ -29,7 +29,7 @@ for (i in 1:40){
 
 orderedbyscaffolds <- lm[order(lm$scaffold), ]
 
-#now get lg data for plotting
+#now get lg data for plotting with circos e.g. start/end values for each segement
 lg_dat_1 <- as.data.frame(lm$V1)
 lg_dat_1$cM <- lm$V3
 
@@ -40,7 +40,7 @@ lg_dat <- rbind(lg_dat_2, lg_dat_1)
 
 lg_dat <- lg_dat[order(lg_dat$`lm$V1`),]
 
-#now get scaffold order for plotting:
+#now get scaffold order for plotting -  want to minimize crossing over of links so reordering is necessary:
 chrom_order_df <- unique(lm$scaffold) 
 chrom_order_df
 missing <- c("scaffold37", "scaffold39")
@@ -70,7 +70,7 @@ totalbp <- sum(as.numeric(chromosomes$bp))
 totalcm <- sum(lg_dat$cM)
 
 
-#work out bp in cm
+#work out bp in cm - to scale segments and links appropriately
 conversion <- totalcm/totalbp
 
 chrom_dat_1 <- renamedchromosomes
@@ -91,7 +91,7 @@ lg_dat$segment <- gsub("Calb", "c", lg_dat$segment)
 colnames(chrom_dat) <- c("segment", "cM")
 full_dat <- rbind (lg_dat, chrom_dat)
 
-#now try circos plot, track outlines are given using 'complete' - dots can be added from this - then want to add links
+#now try circos plot, track outlines/segments are defined using 'complete' - dots can be added from this - then want to add links
 library(circlize)
 circos.clear()
 #then set circos plot parameters
@@ -128,7 +128,7 @@ circos.track(factors = full_dat$segment, ylim = c(0,1),
                            CELL_META$sector.index)
                circos.axis(labels.cex = 0.6)
              })
-#loop through linkage data frame and extract info to make links
+#loop through linkage data frame and extract info to make links e.g. LG and cm position from and scaffold and bp position to
 for (row in 1:(nrow(linkfile))){
   a <- linkfile$newLG[row]
   b <- linkfile$X.1[row]
@@ -137,6 +137,8 @@ for (row in 1:(nrow(linkfile))){
   circos.link(as.character(a), c(as.integer(b)), as.character(e), c(as.integer(d)), h=0.5, col = "black")
 }
 ##################################################################
+##################################################################
+#     now do it all again with new reordering to make plot better
 ######################################
 #load in chromosome lengths and linkage map lengths
 lengthsdf <- read.csv(file = "wtdbg2ChromosomeLenghts.txt", header = FALSE)
@@ -144,7 +146,7 @@ lengthsdf <- subset(lengthsdf, lengthsdf$V1 > 50)
 lm <- read.csv(file = "LM_stats.txt", header = FALSE, sep = " ")
 lengthsdf$Scaffold <- 0:39
 
-#load in samfile already separated columns in excel...
+#load in samfile already separated columns in excel to be readable in R - double check column headers if you are using your own samfile
 samfile <- read.csv(file = "/Users/rishidek/Dropbox/RishiMAC/Genome/ScaffoldedSyntenyTest/SA_linkagemap_Wtdbg2PhaseMapped_Filtered.csv")
 samfile <- subset(samfile, as.character(samfile$PN.bwa) == "PGA")
 
@@ -398,7 +400,7 @@ nrow(linkfile)
 
 
 #--------------------------------
-# plot synteny in loop
+# plot synteny in loop - this will highlight the syntney for each linkage group
 #--------------------------------
 for (i in 1:2){
   circos.clear()
@@ -643,7 +645,7 @@ for (i in 1:40){
 
 
 #---------------------------------
-#plot syntey with collapsed duplicates higlighted
+#plot syntey with collapsed duplicates higlighted - FIGURE5
 
 collapsed <- read.csv("collapsedduplicates.csv", header = TRUE)
 collapsed_plot <- collapsed
@@ -822,6 +824,7 @@ for (i in 1:length(linkfile$X.PG)){
 }
 sum(linkfile$collapsed_link == "yes")
 
+#see how circlize plot looks like when no duplicated markers are included - removes most 'noise'
 library(circlize)
 circos.clear()
 #name of file/parameters
@@ -899,7 +902,8 @@ for (row in 1:(nrow(linkfile))){
 #dev.off()
 
 #--------------------------------
-#now plot recombination rate
+#now plot recombination rate - some issues with linkage marker density etc. with recomination rate calculations 
+#especially for collapsed regions
 #--------------------------------
 dev.off()
 old.par <- par(mar = c(1, 1, 1, 1))
@@ -1045,7 +1049,7 @@ for (i in 1:40){
 #dev.off()
 
 #--------------------------------
-#now check coverage 
+#now check coverage - to make FIGURE4
 #--------------------------------
 
 #load coverage data
@@ -1098,7 +1102,7 @@ for (i in 0:39){
   abline(lm(cov_df_subset$V3 ~ cov_df_subset$V2), col = "green")
 }
 
-#For figure in paper:
+#For figure4 in paper:
 #par(mfrow=c(4,10))
 #par(mfrow=c(1,1))
 #par(mar=c(1,1,1,1))

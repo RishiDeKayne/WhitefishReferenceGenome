@@ -1,0 +1,496 @@
+#annotation of Coregonus sp. "Balchen" genome - De-Kayne, Zoller and Feulner 2019
+
+#gather transcriptomes and protein evidence:
+#transcriptomes of c. lavaretus and clupeaformis from: https://www.ncbi.nlm.nih.gov/Traces/wgs/?page=1&view=TSA&search=coregonus (33k - elmer, 70k alt. c. lavaretus, 60k c. clupeaformis)
+#proteins used from reference proteomes of salmo salar https://www.uniprot.org/proteomes/UP000087266 and rainbow trout https://www.uniprot.org/proteomes/UP000193380
+#additional proteins used from brown trout, arctic charr, coho salmon, chinook salmon, grayling (uniprot):
+#danio rario as alternative EST evidence https://www.ncbi.nlm.nih.gov/Traces/wgs/GDQQ01 (83k seq)
+
+#combine protein evidence
+cat ../SalmoSalarUniprot/UP000087266_8030.fasta ../OmykissUniprot/UP000193380_8022.fasta ../VertebrateSwissprot/uniprot_sprot_vertebrates.fasta > vert_ssalar_omykiss.fasta
+
+#make new maker directory:/cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r1
+#move appropriate maker files into this directory e.g. .ctl files and fastas
+modified maker_opts.ctl to have:
+#proteins
+/cluster/project/gdc/shared/p298/WhitefishRef/CombinedProteinDatabase_annotation/vert_ssalar_omykiss.fasta
+#transcriptomes
+/cluster/project/gdc/shared/p298/WhitefishRef/WhitefishTranscriptomeElmer/C.lavaretus_uniprot.fasta
+#alt EST
+/cluster/project/gdc/shared/p298/WhitefishRef/DanioRarioTranscriptome/GDQQ01.1.fsa_nt.fasta
+
+#also changed single exon genes = 1 and length = 200
+
+##############################################################################################################################
+##############################################################################################################################
+#												FIRST ROUND			
+##############################################################################################################################
+##############################################################################################################################
+
+#start maker run in threaded_r1 folder
+module load gcc/4.8.2 gdc open_mpi/1.6.5
+./prep.and.start.maker.runs.sh
+
+#Use scripts prepare.gff-merge.command.sh and gff_merge.command.sh
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+
+#set -o name in prepare.gff-merge.command.sh - will produce list of gffs and gff_merge.command.sh
+./prepare.gff-merge.command.sh
+
+./gff_merge.command.sh
+
+#count gene number
+grep -c -P "\tmaker\tgene\t" all.gff
+#51578
+
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9 ; maker2zff /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r1/all.gff"
+mkdir SnapAugustus
+mv genome.* SnapAugustus/
+cd SnapAugustus
+
+bsub -W 24:00 -Is /bin/bash
+module load snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+fathom -categorize 1000 genome.ann genome.dna
+fathom -export 1000 -plus uni.ann uni.dna
+forge export.ann export.dna
+
+#train snap
+hmm-assembler.pl snap_round1 . > ./snap_round1.hmm
+#now for next round of maker snap hmm is at: /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r1/SnapAugustus/snap_round1.hmm
+
+mkdir ExportFiles
+mv export.* ExportFiles
+cd ExportFiles
+cp /cluster/project/gdc/shared/scripts/scripts/zff2augustus_gbk.pl .
+./zff2augustus_gbk.pl > combined.new.genbank 2> err & 
+#4161
+
+#split the genbank LOCI with augustus randomsplit.pl into training and test set
+#  use about 1500 genes/LOCI if possible, but do not use more than 2000.
+bsub -W 24:00 -Is /bin/bash
+grep 'ORIGIN' combined.new.genbank | wc -l
+#8567
+
+randomSplit.pl combined.new.genbank 2000
+mv combined.new.genbank.test combined.new.genbank.2000
+randomSplit.pl combined.new.genbank.2000 500
+#results in two files combined.new.genbank.2000.test combined.new.genbank.2000.train
+
+#create new augustus meta params for new species
+mkdir local_augustus
+cp -r  /cluster/apps/gdc/augustus/3.2.1/config/   local_augustus/ 
+cp -r  /cluster/apps/gdc/augustus/3.2.1/scripts/ local_augustus/ 2>/dev/null
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+new_species.pl --species=WhitefishSubset2000    # give it a  useful name
+#in local_augustus/config/species/WhitefishSubset2000/WhitefishSubset2000_parameters.cfg   set: stopCodonExcludedFromCDS true 
+#use vim and set to true
+
+#initial training (use above created *.genbank.train file)
+etraining --species=WhitefishSubset2000 combined.new.genbank.2000.train
+#check for errors:  !!! Terminal exon doesn't end in stop codon. Variable stopCodonExcludedFromCDS set right?
+#since the majority of models have an error go back to step 6 and set local_augustus/config/species/WhitefishSubset/WhitefishSubset_parameters.cfg   set: stopCodonExcludedFromCDS to false
+  
+#first prediction
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+bsub -n1 -W4:00 -R "rusage[mem=20000]" "augustus --species=WhitefishSubset2000 combined.new.genbank.2000.test | tee first_test.out"
+grep -A 22 Evaluation first_test.out
+
+*******      Evaluation of gene prediction     *******
+
+---------------------------------------------\
+                 | sensitivity | specificity |
+---------------------------------------------|
+nucleotide level |       0.902 |        0.67 |
+---------------------------------------------/
+
+----------------------------------------------------------------------------------------------------------\
+           |  #pred |  #anno |      |    FP = false pos. |    FN = false neg. |             |             |
+           | total/ | total/ |   TP |--------------------|--------------------| sensitivity | specificity |
+           | unique | unique |      | part | ovlp | wrng | part | ovlp | wrng |             |             |
+----------------------------------------------------------------------------------------------------------|
+           |        |        |      |               1373 |                918 |             |             |
+exon level |   4149 |   3694 | 2776 | ------------------ | ------------------ |       0.751 |       0.669 |
+           |   4149 |   3694 |      |  449 |   25 |  899 |  452 |   27 |  439 |             |             |
+----------------------------------------------------------------------------------------------------------/
+
+----------------------------------------------------------------------------\
+transcript | #pred | #anno |   TP |   FP |   FN | sensitivity | specificity |
+----------------------------------------------------------------------------|
+gene level |   879 |   500 |   83 |  796 |  417 |       0.166 |      0.0944 |
+----------------------------------------------------------------------------/
+
+#optimize parameters  (will take hours to more than a day)
+curl -L http://cpanmin.us | /cluster/apps/gdc/perl5/perls/perl-5.18.4/bin/perl  -  Parallel::ForkManager 
+perldoc -l Parallel::ForkManager
+bsub -n6 -W96:00 -R "rusage[mem=7000]" "module load gcc/4.8.2 gdc boost/1.55.0 sqlite3/3.11 gsl/1.16 perl/5.18.4 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1; export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config" ;  optimize_augustus.pl --cpus=10 --species=WhitefishSubset2000  combined.new.genbank.2000.train"
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+#   retrain again with the new parameters
+etraining --species=WhitefishSubset2000 combined.new.genbank.2000.train
+   
+10) second prediction
+bsub -n1 -W24:00 -R "rusage[mem=20000]" "augustus --species=WhitefishSubset2000 combined.new.genbank.2000.test | tee second_test.out"
+grep -A 22 Evaluation second_test.out
+
+*******      Evaluation of gene prediction     *******
+
+---------------------------------------------\
+                 | sensitivity | specificity |
+---------------------------------------------|
+nucleotide level |       0.906 |       0.675 |
+---------------------------------------------/
+
+----------------------------------------------------------------------------------------------------------\
+           |  #pred |  #anno |      |    FP = false pos. |    FN = false neg. |             |             |
+           | total/ | total/ |   TP |--------------------|--------------------| sensitivity | specificity |
+           | unique | unique |      | part | ovlp | wrng | part | ovlp | wrng |             |             |
+----------------------------------------------------------------------------------------------------------|
+           |        |        |      |               1345 |                867 |             |             |
+exon level |   4172 |   3694 | 2827 | ------------------ | ------------------ |       0.765 |       0.678 |
+           |   4172 |   3694 |      |  433 |   27 |  885 |  437 |   27 |  403 |             |             |
+----------------------------------------------------------------------------------------------------------/
+
+----------------------------------------------------------------------------\
+transcript | #pred | #anno |   TP |   FP |   FN | sensitivity | specificity |
+----------------------------------------------------------------------------|
+gene level |   867 |   500 |   89 |  778 |  411 |       0.178 |       0.103 |
+----------------------------------------------------------------------------/
+
+##############################################################################################################################
+##############################################################################################################################
+#												SECOND ROUND			
+##############################################################################################################################
+##############################################################################################################################
+#second maker run
+#move local_augustus from threaded_r1 into threaded_r2 folder
+#alter maker run script and prep.maker run script script to add local_augustus
+#edit maker_opts.ctl to add snap hmm and : #est2genome=0 #protein2genome=0
+
+./prep.and.start.maker.runs.sh
+
+#Use scripts prepare.gff-merge.command.sh and gff_merge.command.sh 
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+
+#set -o name in prepare.gff-merge.command.sh - will produce list of gffs and gff_merge.command.sh
+./prepare.gff-merge.command.sh
+
+./gff_merge.command.sh
+
+#count gene number
+grep -c -P "\tmaker\tgene\t" allr2.gff
+44139
+
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9 ; maker2zff /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r2/allr2.gff"
+
+mkdir SnapAugustus
+mv genome.* SnapAugustus/
+cd SnapAugustus
+
+bsub -W 24:00 -Is /bin/bash
+module load snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+fathom -categorize 1000 genome.ann genome.dna
+fathom -export 1000 -plus uni.ann uni.dna
+forge export.ann export.dna
+
+#train snap
+hmm-assembler.pl snap_round1 . > ./snap_round2.hmm
+#now for next round of maker snap hmm is at: /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r2/SnapAugustus/snap_round2.hmm
+
+mkdir ExportFiles
+mv export.* ExportFiles
+cd ExportFiles
+cp /cluster/project/gdc/shared/scripts/scripts/zff2augustus_gbk.pl .
+./zff2augustus_gbk.pl > combined.new.genbank 2> err & 
+#31109
+
+#split the genbank LOCI with augustus randomsplit.pl into training and test set
+ #  use about 1500 genes/LOCI if possible, but do not use more than 2000.
+bsub -W 24:00 -Is /bin/bash
+grep 'ORIGIN' combined.new.genbank | wc -l
+#10545
+
+randomSplit.pl combined.new.genbank 2000
+mv combined.new.genbank.test combined.new.genbank.2000
+randomSplit.pl combined.new.genbank.2000 500
+#results in two files combined.new.genbank.2000.test combined.new.genbank.2000.train
+
+#create new augustus meta params for new species
+mkdir local_augustus
+cp -r  /cluster/apps/gdc/augustus/3.2.1/config/   local_augustus/ 
+cp -r  /cluster/apps/gdc/augustus/3.2.1/scripts/ local_augustus/ 2>/dev/null
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+new_species.pl --species=WhitefishSubset2000    # give it a  useful name
+#in local_augustus/config/species/WhitefishSubset2000/WhitefishSubset2000_parameters.cfg   set: stopCodonExcludedFromCDS true 
+#use vim and set to true
+
+#initial training (use above created *.genbank.train file)
+etraining --species=WhitefishSubset2000 combined.new.genbank.2000.train
+#check for errors:  !!! Terminal exon doesn't end in stop codon. Variable stopCodonExcludedFromCDS set right?
+#since the majority of models have an error go back to step 6 and set local_augustus/config/species/WhitefishSubset/WhitefishSubset_parameters.cfg   set: stopCodonExcludedFromCDS to false
+  
+#first prediction
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+bsub -n1 -W4:00 -R "rusage[mem=20000]" "augustus --species=WhitefishSubset2000 combined.new.genbank.2000.test | tee first_test.out"
+grep -A 22 Evaluation first_test.out
+
+*******      Evaluation of gene prediction     *******
+
+---------------------------------------------\
+                 | sensitivity | specificity |
+---------------------------------------------|
+nucleotide level |       0.912 |       0.588 |
+---------------------------------------------/
+
+----------------------------------------------------------------------------------------------------------\
+           |  #pred |  #anno |      |    FP = false pos. |    FN = false neg. |             |             |
+           | total/ | total/ |   TP |--------------------|--------------------| sensitivity | specificity |
+           | unique | unique |      | part | ovlp | wrng | part | ovlp | wrng |             |             |
+----------------------------------------------------------------------------------------------------------|
+           |        |        |      |               2534 |               1467 |             |             |
+exon level |   5792 |   4725 | 3258 | ------------------ | ------------------ |        0.69 |       0.562 |
+           |   5792 |   4725 |      |  831 |   56 | 1647 |  830 |   52 |  585 |             |             |
+----------------------------------------------------------------------------------------------------------/
+
+----------------------------------------------------------------------------\
+transcript | #pred | #anno |   TP |   FP |   FN | sensitivity | specificity |
+----------------------------------------------------------------------------|
+gene level |  1091 |   500 |   49 | 1042 |  451 |       0.098 |      0.0449 |
+----------------------------------------------------------------------------/
+
+#optimize parameters  (will take hours to more than a day)
+curl -L http://cpanmin.us | /cluster/apps/gdc/perl5/perls/perl-5.18.4/bin/perl  -  Parallel::ForkManager 
+perldoc -l Parallel::ForkManager
+bsub -n6 -W96:00 -R "rusage[mem=7000]" "module load gcc/4.8.2 gdc boost/1.55.0 sqlite3/3.11 gsl/1.16 perl/5.18.4 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1; export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config" ;  optimize_augustus.pl --cpus=10 --species=WhitefishSubset2000  combined.new.genbank.2000.train"
+
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+export AUGUSTUS_CONFIG_PATH="`pwd`/local_augustus/config"
+#   retrain again with the new parameters
+etraining --species=WhitefishSubset2000 combined.new.genbank.2000.train
+   
+10) second prediction
+bsub -n1 -W24:00 -R "rusage[mem=20000]" "augustus --species=WhitefishSubset2000 combined.new.genbank.2000.test | tee second_test.out"
+grep -A 22 Evaluation second_test.out
+
+*******      Evaluation of gene prediction     *******
+
+---------------------------------------------\
+                 | sensitivity | specificity |
+---------------------------------------------|
+nucleotide level |       0.914 |       0.592 |
+---------------------------------------------/
+
+----------------------------------------------------------------------------------------------------------\
+           |  #pred |  #anno |      |    FP = false pos. |    FN = false neg. |             |             |
+           | total/ | total/ |   TP |--------------------|--------------------| sensitivity | specificity |
+           | unique | unique |      | part | ovlp | wrng | part | ovlp | wrng |             |             |
+----------------------------------------------------------------------------------------------------------|
+           |        |        |      |               2469 |               1414 |             |             |
+exon level |   5780 |   4725 | 3311 | ------------------ | ------------------ |       0.701 |       0.573 |
+           |   5780 |   4725 |      |  821 |   53 | 1595 |  816 |   50 |  548 |             |             |
+----------------------------------------------------------------------------------------------------------/
+
+----------------------------------------------------------------------------\
+transcript | #pred | #anno |   TP |   FP |   FN | sensitivity | specificity |
+----------------------------------------------------------------------------|
+gene level |  1072 |   500 |   52 | 1020 |  448 |       0.104 |      0.0485 |
+----------------------------------------------------------------------------/
+
+
+#now collect the proteins/transcripts for each run:
+#run 1
+./collect.maker.fastas.sh 
+
+grep ">" all.maker.proteins.fasta | wc -l
+54736
+
+#run2
+./collect.maker.fastas.sh 
+grep ">" all.maker.proteins.fasta | wc -l
+44142
+
+#and get the AED score distributions for run2
+grep ">" all.maker.proteins.fasta |grep -o -P " AED:.+? " |cut -f2 -d":" > all.AED.values.txt
+module load gcc/4.8.2 gdc r/3.1.2 
+Rscript cumulative.freq.plot.R all.AED.values.txt 1 1 100
+mv Rplots.pdf AED.freq.plot_fullprot.pdf
+
+#now run buscos on the transcripts:
+#run 1:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r1_2/all.maker.transcripts.fasta  -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco3.log 2> busco3.err
+bsub < submit.busco3.lsf
+#results
+# C:80.5%[S:48.8%,D:31.7%],F:9.8%,M:9.7%,n:4584
+# 3690 Complete BUSCOs (C)
+# 2239 Complete and single-copy BUSCOs (S)
+# 1451 Complete and duplicated BUSCOs (D)
+# 447 Fragmented BUSCOs (F)
+# 447 Missing BUSCOs (M)
+# 4584 Total BUSCO groups searched 
+
+#run 2:
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r2/all.maker.transcripts.fasta  -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco3.log 2> busco3.err
+#results
+# C:80.3%[S:53.7%,D:26.6%],F:9.9%,M:9.8%,n:4584
+# 3682 Complete BUSCOs (C)
+# 2462 Complete and single-copy BUSCOs (S)
+# 1220 Complete and duplicated BUSCOs (D)
+# 454 Fragmented BUSCOs (F)
+# 448 Missing BUSCOs (M)
+# 4584 Total BUSCO groups searched
+
+
+#remove unnecessary files:
+find maker.* -name "theVoid.*" -exec rm -rf {} \;
+
+##############################################################################################################################
+##############################################################################################################################
+#												THIRD ROUND			
+##############################################################################################################################
+##############################################################################################################################
+
+#third maker run
+#move local_augustus from threaded_r2 into threaded_r3 folder
+#alter prep.maker run script script to add local_augustus
+#edit maker_opts.ctl to add snap hmm and : #est2genome=0 #protein2genome=0
+
+./prep.and.start.maker.runs.sh
+
+#stefan scripts prepare.gff-merge.command.sh and gff_merge.command.sh 
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+
+#set -o name in prepare.gff-merge.command.sh - will produce list of gffs and gff_merge.command.sh
+./prepare.gff-merge.command.sh
+
+./gff_merge.command.sh
+
+#count gene number
+grep -c -P "\tmaker\tgene\t" allr3.gff
+46397
+
+bsub -n4 -W 24:00 -R "rusage[mem=10000]" "module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9 ; maker2zff /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/allr3.gff"
+
+#################
+#################
+GFF file now produced: allr3.gff
+#################
+#################
+
+#check BUSCOs after final round
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/all.maker.transcripts.fasta  -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco3.log 2> busco3.err
+# C:81.8%[S:54.8%,D:27.0%],F:9.2%,M:9.0%,n:4584
+# 3747 Complete BUSCOs (C)
+# 2511 Complete and single-copy BUSCOs (S)
+# 1236 Complete and duplicated BUSCOs (D)
+# 422 Fragmented BUSCOs (F)
+# 415 Missing BUSCOs (M)
+# 4584 Total BUSCO groups searched
+
+#now use Pannzer2 for functional annotation at: http://ekhidna2.biocenter.helsinki.fi/sanspanz/
+
+##############################################################################################################################
+##############################################################################################################################
+#												Post Annotation processing		
+##############################################################################################################################
+##############################################################################################################################
+#to get annotation statistics following Maker2 Pannzer2
+#extract exons from .gff file
+awk '{ if ($3 == "exon") { print } }' allr3.gff > exons.txt
+
+#calculate the length of exons 
+for i in exons.txt; do
+    awk '{ print $5-$4; }' "$i" > exons_length_output.txt ;
+done
+
+#calculate the mean median mode of the exons
+awk '
+{
+     sum+=$1
+     a[x++]=$1
+     b[$1]++
+}
+b[$1]>Mode{Mode=$1}
+END{
+    print "Mean: " sum/x 
+    print "Median: "a[int((x-1)/2)] 
+    print "Mode: " Mode
+}' exons_length_output.txt
+
+#Mean: 196.793
+#Median: 164
+#Mode: 93
+
+#extract genes from .gff file
+awk '{ if ($3 == "gene") { print } }' allr3.gff > genes.txt
+
+#calculate the length of genes 
+for i in genes.txt; do
+    awk '{ print $5-$4; }' "$i" > genes_length_output.txt ;
+done
+
+#calculate the mean median mode of the genes
+awk '
+{
+     sum+=$1
+     a[x++]=$1
+     b[$1]++
+}
+b[$1]>Mode{Mode=$1}
+END{
+    print "Mean: " sum/x 
+    print "Median: "a[int((x-1)/2)] 
+    print "Mode: " Mode
+}' genes_length_output.txt
+
+#Mean: 11545.9
+#Median: 206
+#Mode: 13682
+
+#calculate min/max values
+awk 'BEGIN {max = 0} {if ($1>max) max=$1} END {print max}' genes_length_output.txt
+#187074
+awk 'BEGIN {min = 99999999} {if ($1<min) min=$1} END {print min}' genes_length_output.txt
+#77
+
+awk 'BEGIN {max = 0} {if ($1>max) max=$1} END {print max}' exons_length_output.txt
+#17274
+awk 'BEGIN {min = 99999999} {if ($1<min) min=$1} END {print min}' exons_length_output.txt
+#2
+
+#get Pannzer2 genes functionally annotated
+sort -k1,1 -u GO.out > UniqueGOEntries.txt
+wc -l UniqueGOEntries.txt 
+#34697 UniqueGOEntries.txt
+
+
+#now change maker output gene names: CSTEINMANNI
+bsub -W 24:00 -Is /bin/bash
+module load gdc java snap/2006-07-28 blast/2.3.0 exonerate/2.4.0 genemark_es/4 hmmer/3.1 rmblast/2.6.0 repeatmasker/4.0.7 boost/1.55.0 sqlite3/3.11 gsl/1.16 bamtools/2.4.0 suitesparse/4.5.1 openblas/0.2.13_seq augustus/3.2.1 maker/2.31.9
+
+#produce map to convert names:
+maker_map_ids --prefix CSTEINMANNI_ --justify 8 allr3.gff > allr3.map
+#now in format: 
+
+#now make new versions to be renamed:
+cp allr3.gff allr3.renamed.gff
+cp all.maker.proteins.fasta all.maker.proteins.renamed.fasta
+cp all.maker.transcripts.fasta all.maker.transcripts.renamed.fasta
+
+#and rename:
+map_gff_ids allr3.map allr3.renamed.gff
+map_fasta_ids allr3.map all.maker.proteins.renamed.fasta
+map_fasta_ids allr3.map all.maker.transcripts.renamed.fasta
+
+
+
+

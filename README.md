@@ -43,6 +43,7 @@ Parameters/submission scripts are included for:
 
 ### Repeat masking
 - RepeatAnnotationCommands.txt - all commands for repeat masking of each assembly
+- SalmonidaeRepbase.lib - Salmonidae repeat library used in repeat annotation
 
 ***
 
@@ -66,12 +67,3 @@ modified parameter files for round 2 and round 3 of maker
 - prep.and.start.maker.runs_r23.sh
 - maker_opts_r2.ctl
 - maker_opts_r3.ctl
-
-
-
-
-
-
-
-
-

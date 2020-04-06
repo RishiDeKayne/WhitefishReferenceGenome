@@ -676,3 +676,536 @@ echo $(zcat /cluster/project/gdc/shared/p298/data/22M2_L8_R2_001_uOptbvPmT9xT.fa
 
 #genome online at ENA:
 Sample	ERS3595991 (SAMEA5807383) AWG_v1_sample1
+
+###########################################
+reviewer response:
+
+#add missing repeat landscape of wtdbg2 purged assembly:
+bsub -n1 -W 24:00 -R "rusage[mem=10000]" "module load java gdc; cut -d '.' -f1 /cluster/scratch/rdekayne/TE_masking_Full/purged_wtdbg2_rerun/wtdbg2.purged.ordered.fasta > /cluster/scratch/rdekayne/TE_masking_Full/purged_wtdbg2_rerun/wtdbg2.purged.ordered.headertrimmed.fasta"
+awk '/^>/{print ">" ++i; next}{print}' < /cluster/scratch/rdekayne/TE_masking_Full/purged_wtdbg2_rerun/wtdbg2.purged.ordered.headertrimmed.fasta > renamed_rerun_wtdbg2.purged.fasta
+bsub -n10 -W 24:00 -R "rusage[mem=5000]" "module load java gdc repeatmodeler/1.0.11 repeatmasker/4.0.7; RepeatMasker -pa 10 -a -xsmall -gccalc -lib /cluster/project/gdc/shared/p298/Rishi/RepeatLibraries/WF_CFW_and_Salmonidae_repeats.lib /cluster/scratch/rdekayne/TE_masking_Full/purged_wtdbg2_rerun/renamed_rerun_wtdbg2.purged.fasta" 
+
+
+
+grep ">" all.maker.proteins.fasta |grep -o -P " AED:.+? " |cut -f2 -d":" > all.AED.values.txt
+    module load gcc/4.8.2 gdc r/3.1.2 
+    Rscript /cluster/project/gdc/shared/p298/Rishi/scripts/cumulative.freq.plot.R all.AED.values.txt 1 1 100
+    mv Rplots.pdf AED.freq.plot.pdf
+    
+    
+sed -i 's/PGA_scaffold0__352_contigs__length_93459789/1/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold1__210_contigs__length_43329510/2/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold2__176_contigs__length_42764345/3/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold3__454_contigs__length_92224161/4/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold4__243_contigs__length_45591172/5/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold5__223_contigs__length_43692974/6/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold6__535_contigs__length_65391737/7/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold7__351_contigs__length_68138733/8/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold8__181_contigs__length_65193448/9/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold9__196_contigs__length_60468309/10/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold10__182_contigs__length_63177489/11/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold11__203_contigs__length_63881516/12/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold12__167_contigs__length_57740044/13/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold13__147_contigs__length_47256133/14/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold14__173_contigs__length_55641933/15/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold15__168_contigs__length_54025139/16/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold16__334_contigs__length_54216998/17/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold17__183_contigs__length_51949489/18/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold18__164_contigs__length_59907985/19/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold19__147_contigs__length_54335267/20/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold20__181_contigs__length_52945597/21/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold21__417_contigs__length_56862223/22/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold22__199_contigs__length_52020451/23/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold23__167_contigs__length_50329371/24/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold24__152_contigs__length_51033154/25/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold25__179_contigs__length_50922480/26/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold26__192_contigs__length_48683376/27/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold27__289_contigs__length_46671285/28/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold28__172_contigs__length_48977775/29/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold29__157_contigs__length_48675208/30/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold30__165_contigs__length_48446552/31/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold31__196_contigs__length_44616205/32/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold32__183_contigs__length_44662967/33/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold33__143_contigs__length_40727438/34/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold34__308_contigs__length_42609905/35/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold35__141_contigs__length_42009912/36/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold36__136_contigs__length_43663377/37/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold37__332_contigs__length_36774138/38/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold38__206_contigs__length_33962415/39/g' symap_input_wtdbg2.fasta;
+sed -i 's/PGA_scaffold39__3_contigs__length_1094305/40/g' symap_input_wtdbg2.fasta;
+done
+
+sed -i 's/>/>chr/g' symap_input_wtdbg2.fasta;
+
+#make it hardmasked
+sed -e '/^>/! s/[[:lower:]]/N/g' symap_input_wtdbg2.fasta > symap_input_wtdbg2_Ns.fasta
+
+#now try running nucmer with masked reference
+#bsub -n1 -W 120:00 -R "rusage[mem=56000]" "module load gdc java mummer/4.0.0b1; nucmer --threads=8 -maxmatch /cluster/scratch/rdekayne/BAM_RESEQ/symap_input_wtdbg2_Ns.fasta /cluster/scratch/rdekayne/BAM_RESEQ/symap_input_wtdbg2_Ns.fasta"
+
+#trial with lastz
+#first split up masked ref:
+while read line
+do
+    if [[ ${line:0:1} == '>' ]]
+    then
+        outfile=${line#>}.fa
+        echo $line > $outfile
+    else
+        echo $line >> $outfile
+    fi
+done < /cluster/scratch/rdekayne/BAM_RESEQ/symap_input_wtdbg2_Ns.fasta
+
+#test comparing 4th chrom and 23rd:
+bsub -n1 -W 24:00 -R "rusage[mem=40000]" "module load java gdc gcc/4.8.2 gdc python/2.7.11 r/3.1.2; /cluster/apps/gdc/lastz/1.02/bin/lastz /cluster/scratch/rdekayne/Lastz/maskedchroms/chr23.fa /cluster/scratch/rdekayne/Lastz/maskedchroms/chr4.fa --notransition --step=20 --nogapped --output=test1.out --rdotplot=test1.rdotplot.out --format=general"
+bsub -n1 -W 24:00 -R "rusage[mem=40000]" "module load java gdc gcc/4.8.2 gdc python/2.7.11 r/3.1.2; /cluster/apps/gdc/lastz/1.02/bin/lastz /cluster/scratch/rdekayne/Lastz/maskedchroms/chr23.fa /cluster/scratch/rdekayne/Lastz/maskedchroms/chr4.fa --chain --gapped --gfextend --identity=75.0..100. --ambiguous=iupac --exact=40 --output=test2.out --rdotplot=test2.rdotplot.out --format=general"
+
+
+bsub -n1 -W 20:00 -R "rusage[mem=10000]" "module load gdc; tar cfvz /cluster/project/gdc/shared/p298/Rishi/FULLPROT_MAKERRUN.tar.gz /cluster/project/gdc/shared/p298/Rishi/FULLPROT_MAKERRUN"
+bmod -W 24:00 110481798
+bsub -n1 -W 20:00 -R "rusage[mem=10000]" "module load gdc; rm -r /cluster/project/gdc/shared/p298/Rishi/FULLPROT_MAKERRUN"
+
+#gives first column of a/b in col 14 
+cat test1.out | awk '{split($14,a,"/"); print a[1]}' > test3.awktest.out
+
+#also works and just removes / and makes new column for each but replaces tabs by commas...
+#awk -F'[/\t]' '{$14=$13":"$14}1' OFS=, test1.out > test1.awktest2.out
+
+#merge to old dataset:
+paste test1.out test3.awktest.out > test1.withcov.out
+
+#use sed to remove % sign from percent column 13
+sed 's/%//g' test1.withcov.out > test1.withcov.nopercent.out
+
+#now filter with awk to remove values of column 16 < 1000bp
+#filter to minimum of 1000 base pairs and a minimum match value of 75% with awk
+awk '{ if ($16 >= 1000 && $13 > 75) print $0 }' test1.withcov.nopercent.out > test1.withcov.nopercent_filtered.out
+
+#now all written into scripts:/cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript_extend2.lsf
+
+#get pike genome
+#remove unscaffolded/unplaced regions
+module load gdc java
+module load gcc/4.8.2 gdc blast fastx_toolkit/0.0.14
+fasta_formatter -w 0 -i /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.fna -o /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.oneline.fna
+#get first 11 pike chromosomes
+head -22 /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.oneline.fna > /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.oneline1_to_11.fna
+#and 12-25
+head -68 /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.oneline.fna | tail -28 > /cluster/scratch/rdekayne/ncbi-genomes-2020-02-04/GCF_004634155.1_Eluc_v4_genomic.oneline12_to_25.fna
+
+#merge into one
+cat GCF_004634155.1_Eluc_v4_genomic.oneline1_to_11.fna GCF_004634155.1_Eluc_v4_genomic.oneline12_to_25.fna > pike.fasta
+
+#now replace fasta headings with chr 1 etc.
+awk '/^>/{print ">chr" ++i; next}{print}' < pike.fasta > pike_numbered.fasta
+mv pike_numbered.fasta /cluster/project/gdc/shared/p298/data/symap_input_pike.fasta
+
+/cluster/project/gdc/shared/p298/data/symap_input_pike.fasta
+      
+######################
+#remove AED more than 0.6
+#count genes in gff first:
+cat allr3.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > countgenes.txt
+#nrows 46397
+
+bsub -W 4:00 -Is /bin/bash
+module load java gdc gcc/4.8.2 gdc zlib/1.2.8 openblas/0.2.13_seq plink/1.90 samtools vcflib stacks/1.40 bowtie2/2.2.3 vcftools/0.1.14
+
+perl quality_filter.pl -a 0.6 allr3.gff > allr3_filt.gff
+
+cat allr3_filt.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > countgenes_postfilter.txt
+#nrows 44525
+
+#check exon length distribution:
+#before it was:
+#Mean: 196.793
+#Median: 164
+#Mode: 93
+
+
+#extract exons from .gff file
+awk '{ if ($3 == "exon") { print } }' allr3_filt.gff > filt_exons.txt
+
+#calculate the length of exons 
+for i in filt_exons.txt; do
+    awk '{ print $5-$4; }' "$i" > exons_length_output.txt ;
+done
+
+#calculate the mean median mode of the exons
+awk '
+{
+     sum+=$1
+     a[x++]=$1
+     b[$1]++
+}
+b[$1]>Mode{Mode=$1}
+END{
+    print "Mean: " sum/x 
+    print "Median: "a[int((x-1)/2)] 
+    print "Mode: " Mode
+}' exons_length_output.txt
+
+#Mean: 196.711
+#Median: 135
+#Mode: 237
+
+#now try to remove pseudo genes to see if there are still any
+bsub -n 1 -W 48:00 -R "rusage[mem=50000]" "module load java gdc gcc/4.8.2 gdc; \
+	source /cluster/project/gdc/shared/tools/miniconda/bin/activate EMBLmyGFF3 ; \
+	agat_sp_flag_short_introns.pl --gff /cluster/scratch/rdekayne/ConvertGFF/allr3_filt.gff \
+	--out /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered.gff"
+
+wc -l pseudo_filtered.gff
+#16593901
+
+cat pseudo_filtered.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > pseudo_filtered.txt
+wc -l pseudo_filtered.txt
+#44525
+
+#now try removing exons from /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered.gff
+awk '{ if ($3 != "exon") { print } }' /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered.gff > /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered_noexons.gff
+
+wc -l pseudo_filtered_noexons.gff
+#16236422
+
+cat pseudo_filtered_noexons.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > pseudo_filtered_noexons.txt
+wc -l pseudo_filtered.txt
+#44525
+
+#now filter gff to get annotations from scaffolds and those on contigs
+grep "^PGA" pseudo_filtered_noexons.gff > pseudo_filtered_scaffolds.gff
+wc -l pseudo_filtered_scaffolds.gff
+#15535397
+cat pseudo_filtered_scaffolds.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > countgenes_postfilter_scaffolds.txt
+wc -l countgenes_postfilter_scaffolds.txt
+#42695
+#96% of all genes
+
+grep "^Contig" pseudo_filtered_noexons.gff > pseudo_filtered_contigs.gff
+wc -l pseudo_filtered_contigs.gff
+#701024
+cat pseudo_filtered_contigs.gff | awk 'OFS="\t"{if ($3=="gene") print $0}' > countgenes_postfilter_contigs.txt
+wc -l countgenes_postfilter_contigs.txt
+#1830
+#4%
+
+#check exons have been removed
+grep "exon" pseudo_filtered.gff | wc -l
+#357479
+grep "exon" pseudo_filtered_noexons.gff | wc -l
+0
+grep "exon" pseudo_filtered_scaffolds.gff | wc -l
+0
+grep "exon" pseudo_filtered_contigs.gff | wc -l
+0
+
+#now make flatfile for scaffolds and then for contigs:
+#still finding >900 problematic genes but try to form flatfile and see result:
+bsub -n 1 -W 120:00 -R "rusage[mem=80000]" "module load java gdc gcc/4.8.2 gdc; \
+	source /cluster/project/gdc/shared/tools/miniconda/bin/activate EMBLmyGFF3 ; \
+	EMBLmyGFF3 /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered_scaffolds.gff /cluster/scratch/rdekayne/ConvertGFF/AWG_v1.fasta \
+        --topology linear \
+        --molecule_type 'genomic DNA' \
+        --transl_table 1  \
+        --species 'Coregonus sp. "balchen"' \
+        --locus_tag CSTEINMANNI \
+        --project_id PRJEB33097 \
+        -o /cluster/scratch/rdekayne/ConvertGFF/AWG_v2.AED0.6_pseudo_scaffolds.embl"
+        
+bsub -n 1 -W 24:00 -R "rusage[mem=50000]" "module load java gdc gcc/4.8.2 gdc; \
+	source /cluster/project/gdc/shared/tools/miniconda/bin/activate EMBLmyGFF3 ; \
+	EMBLmyGFF3 /cluster/scratch/rdekayne/ConvertGFF/pseudo_filtered_contigs.gff /cluster/scratch/rdekayne/ConvertGFF/AWG_v2.unscaffolded.fasta \
+        --topology linear \
+        --molecule_type 'genomic DNA' \
+        --transl_table 1  \
+        --species 'Coregonus sp. "balchen"' \
+        --locus_tag CSTEINMANNI \
+        --project_id PRJEB33097 \
+        -o /cluster/scratch/rdekayne/ConvertGFF/AWG_v2.AED0.6_pseudo_contigs.embl"
+        
+#-i CSTEINMANNI
+#-p PRJEB33097
+#-r 1
+#-t linear
+#-s Coregonus sp "Balchen"
+#-m "genomic DNA"
+
+#then validate	
+java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName rishidek@hotmail.com -password=CspAlbock*  -test -validate
+
+#and submit
+java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName rishidek@hotmail.com -password=CspAlbock*  -submit
+
+
+#######
+#lastz
+#copy the symap output to the cluster
+#test data first
+#testdata.txt
+
+whitefish_blocks.tsv
+
+#remove header line
+#tail -n +2 testdata.txt > testdata2.txt
+tail -n +2 whitefish_blocks.tsv > data2.txt
+
+#add characters to sed scaffold names
+#cat testdata2.txt | awk 'OFS="\t"{print $1, $2, "a"$3"a", "a"$4"a", $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15}' > testdata3.txt
+cat data2.txt | awk 'OFS="\t"{print $1, $2, "a"$3"a", "a"$4"a", $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15}' > data3.txt
+
+#replace numbers in input to chromosomes
+sed -i 's/a1a/PGA_scaffold0__352_contigs__length_93459789/g' data3.txt;
+sed -i 's/a2a/PGA_scaffold1__210_contigs__length_43329510/g' data3.txt;
+sed -i 's/a3a/PGA_scaffold2__176_contigs__length_42764345/g' data3.txt;
+sed -i 's/a4a/PGA_scaffold3__454_contigs__length_92224161/g' data3.txt;
+sed -i 's/a5a/PGA_scaffold4__243_contigs__length_45591172/g' data3.txt;
+sed -i 's/a6a/PGA_scaffold5__223_contigs__length_43692974/g' data3.txt;
+sed -i 's/a7a/PGA_scaffold6__535_contigs__length_65391737/g' data3.txt;
+sed -i 's/a8a/PGA_scaffold7__351_contigs__length_68138733/g' data3.txt;
+sed -i 's/a9a/PGA_scaffold8__181_contigs__length_65193448/g' data3.txt;
+sed -i 's/a10a/PGA_scaffold9__196_contigs__length_60468309/g' data3.txt;
+sed -i 's/a11a/PGA_scaffold10__182_contigs__length_63177489/g' data3.txt;
+sed -i 's/a12a/PGA_scaffold11__203_contigs__length_63881516/g' data3.txt;
+sed -i 's/a13a/PGA_scaffold12__167_contigs__length_57740044/g' data3.txt;
+sed -i 's/a14a/PGA_scaffold13__147_contigs__length_47256133/g' data3.txt;
+sed -i 's/a15a/PGA_scaffold14__173_contigs__length_55641933/g' data3.txt;
+sed -i 's/a16a/PGA_scaffold15__168_contigs__length_54025139/g' data3.txt;
+sed -i 's/a17a/PGA_scaffold16__334_contigs__length_54216998/g' data3.txt;
+sed -i 's/a18a/PGA_scaffold17__183_contigs__length_51949489/g' data3.txt;
+sed -i 's/a19a/PGA_scaffold18__164_contigs__length_59907985/g' data3.txt;
+sed -i 's/a20a/PGA_scaffold19__147_contigs__length_54335267/g' data3.txt;
+sed -i 's/a21a/PGA_scaffold20__181_contigs__length_52945597/g' data3.txt;
+sed -i 's/a22a/PGA_scaffold21__417_contigs__length_56862223/g' data3.txt;
+sed -i 's/a23a/PGA_scaffold22__199_contigs__length_52020451/g' data3.txt;
+sed -i 's/a24a/PGA_scaffold23__167_contigs__length_50329371/g' data3.txt;
+sed -i 's/a25a/PGA_scaffold24__152_contigs__length_51033154/g' data3.txt;
+sed -i 's/a26a/PGA_scaffold25__179_contigs__length_50922480/g' data3.txt;
+sed -i 's/a27a/PGA_scaffold26__192_contigs__length_48683376/g' data3.txt;
+sed -i 's/a28a/PGA_scaffold27__289_contigs__length_46671285/g' data3.txt;
+sed -i 's/a29a/PGA_scaffold28__172_contigs__length_48977775/g' data3.txt;
+sed -i 's/a30a/PGA_scaffold29__157_contigs__length_48675208/g' data3.txt;
+sed -i 's/a31a/PGA_scaffold30__165_contigs__length_48446552/g' data3.txt;
+sed -i 's/a32a/PGA_scaffold31__196_contigs__length_44616205/g' data3.txt;
+sed -i 's/a33a/PGA_scaffold32__183_contigs__length_44662967/g' data3.txt;
+sed -i 's/a34a/PGA_scaffold33__143_contigs__length_40727438/g' data3.txt;
+sed -i 's/a35a/PGA_scaffold34__308_contigs__length_42609905/g' data3.txt;
+sed -i 's/a36a/PGA_scaffold35__141_contigs__length_42009912/g' data3.txt;
+sed -i 's/a37a/PGA_scaffold36__136_contigs__length_43663377/g' data3.txt;
+sed -i 's/a38a/PGA_scaffold37__332_contigs__length_36774138/g' data3.txt;
+sed -i 's/a39a/PGA_scaffold38__206_contigs__length_33962415/g' data3.txt;
+sed -i 's/a40a/PGA_scaffold39__3_contigs__length_1094305/g' data3.txt;
+done
+
+#extract info for bedtools
+#cat testdata3.txt | awk 'OFS="\t"{print $3, $6, $7, $3$6$7}' > from/from.txt
+#cat testdata3.txt | awk 'OFS="\t"{print $4, $8, $9, $4$8$9}' > to/to.txt
+
+cat data3.txt | awk 'OFS="\t"{print $3, $6, $7, $3$6$7}' > from/from.txt
+cat data3.txt | awk 'OFS="\t"{print $4, $8, $9, $4$8$9}' > to/to.txt
+
+cat from/from.txt | awk 'OFS="\t"{print $4}' > from/from_fastas.txt
+cat from/from.txt | awk 'OFS="\t"{print $1}' > from/input_fastas.txt
+
+
+cat to/to.txt | awk 'OFS="\t"{print $4}' > to/to_fastas.txt
+cat to/to.txt | awk 'OFS="\t"{print $1}' > to/input_fastas.txt
+
+#get sequences to match for each chromosome to extract from
+awk '/^>/ {OUT=substr($0,2) ".fa"}; OUT {print >OUT}' /cluster/scratch/rdekayne/ConvertGFF/AWG_v1.fasta
+
+#loop through generating .fai indices
+bsub -W 24:00 -Is /bin/bash
+module load gdc java samtools
+for f in *.fa
+do
+  samtools faidx $f
+done
+
+#run scripts to extract fasta sequences
+wc -l to/to_fastas.txt
+#110
+bsub -n1 -W 4:00 -N -u "rishi.de-kayne@eawag.ch" -J "from_ext[1-110]%50" -R "rusage[mem=1000,scratch=1000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/from/from_ext_test.out < /cluster/scratch/rdekayne/Lastz/SymapTest/from/from.extract.lsf
+rm PGA*.txt
+bsub -n1 -W 4:00 -N -u "rishi.de-kayne@eawag.ch" -J "to_ext[1-110]%50" -R "rusage[mem=1000,scratch=1000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/to/to_ext_test.out < /cluster/scratch/rdekayne/Lastz/SymapTest/to/to.extract.lsf
+
+#now run lastz 
+#want to map each line from: from/from_fastas.txt to each in: to/to_fastas.txt 
+bsub -n1 -W 4:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[1-110]%10" -R "rusage[mem=12000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript.lsf
+bsub -n1 -W 4:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[110]%10" -R "rusage[mem=12000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript.lsf
+bsub -n1 -W 4:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[1-10]%10" -R "rusage[mem=12000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript.lsf
+
+#sort output into two columns
+mv averages.out averages.txt
+awk '{printf "%s%s",$0,NR%2?"\t":RS}' averages.txt > sorted_averages.txt
+#and order by block
+sort -k1 -n sorted_averages.txt
+#rm *.out
+
+#also to check in averageout/ directory:
+for f in *.out
+do
+	echo $f >> names_aves.txt
+	cat $f | awk '{sum+=$13} END { print "Average = ",sum/NR}' >> values_aves.txt
+done
+paste names_aves.txt values_aves.txt > allaverages.txt
+sort -k1 -n allaverages.txt > allaveragesordered.txt
+
+
+#and try for sutherland and lien parameters
+bsub -n1 -W 10:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[20-110]%5" -R "rusage[mem=12000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info_extend.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript_extend.lsf
+
+#sort output into two columns
+mv averages.out averages_extended.txt
+awk '{printf "%s%s",$0,NR%2?"\t":RS}' averages_extended.txt > sorted_averages_extended.txt
+#and order by block
+sort -k1 -n sorted_averages_extended.txt 
+#rm *.out
+
+#also to check in averageout/ directory:
+for f in *.out
+do
+	echo $f >> names_aves.txt
+	cat $f | awk '{sum+=$13} END { print "Average = ",sum/NR}' >> values_aves.txt
+done
+paste names_aves.txt values_aves.txt > allaverages.txt
+sort -k1 -n allaverages.txt > allaveragesordered_extended.txt
+
+#and try for sutherland and lien parameters
+bsub -n1 -W 10:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[1-10]%5" -R "rusage[mem=10000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info_extend.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript_extend2.lsf
+bsub -n1 -W 10:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[11-110]%5" -R "rusage[mem=10000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/info_extend.out < /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript_extend2.lsf
+
+
+#sort output into two columns
+mv averages.out averages_extended.txt
+awk '{printf "%s%s",$0,NR%2?"\t":RS}' averages_extended.txt > sorted_averages_extended.txt
+#and order by block
+sort -k1 -n sorted_averages_extended.txt 
+#rm *.out
+
+#also to check in averageout/ directory:
+
+for f in *.out
+do
+	echo $f >> names_aves.txt
+	cat $f | awk '{sum+=$13} END { print "Average = ",sum/NR}' >> values_aves.txt
+done
+paste names_aves.txt values_aves.txt > allaverages.txt
+sort -k1 -n allaverages.txt > allaveragesordered_extended.txt
+
+
+###########################
+#decided to use lien parameters since they produce the longest mappings
+#first filter out <75% mappings
+for f in *.out
+do
+	cat $f | awk '{ if ($13 >= 75) print $0 }' > $f.75.out
+done
+for f in *.out.75.out
+do
+	echo $f >> names_aves_final.txt
+	cat $f | awk '{sum+=$13} END { print "Average = ",sum/NR}' >> values_aves_final.txt
+done
+paste names_aves_final.txt values_aves_final.txt > allaverages_final.txt
+sort -k1 -n allaverages_final.txt > allaveragesordered_extended_final.txt
+
+################################################
+#buscos with filtered annotation:
+cat /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/all.maker.transcripts.fasta  | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ { print n $0; n = "" } END { printf "%s", n }' |  awk '(($0~/^>/)&&($0~/scaffold/)){split($4,a,":"); if(a[2]<0.6) {print; getline; print}}' > buscotest.Coregonus.faa
+cat /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/all.maker.transcripts.fasta  | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ { print n $0; n = "" } END { printf "%s", n }' |  awk '(($0~/^>/)&&($0~/Contig/)){split($4,a,":"); if(a[2]<0.6) {print; getline; print}}' > buscotest_contig.Coregonus.faa
+
+cat buscotest.Coregonus.faa buscotest_contig.Coregonus.faa > complete_forBUSCO.fasta
+mkdir BUSCO
+cd BUSCO 
+
+/cluster/project/gdc/shared/scripts/submitscripts/BUSCO/automate-busco_v3.sh
+run_BUSCO.py -c 18 -o run3  -sp zebrafish  -i /cluster/scratch/rdekayne/ConvertGFF/complete_forBUSCO.fasta  -l /cluster/project/gdc/shared/databases/busco/actinopterygii_odb9  -m genome --long  > busco.log 2> busco.err 
+
+
+# and the same for orthofinder and for pannzer 2
+cat /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/all.maker.proteins.fasta | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ { print n $0; n = "" } END { printf "%s", n }' |  awk '(($0~/^>/)&&($0~/scaffold/)){split($3,a,":"); if(a[2]<0.6) {print; getline; print}}' > new.Coregonus.faa
+cat /cluster/scratch/rdekayne/Maker_wtdbg2_fullprot/threaded_r3/all.maker.proteins.fasta | awk '!/^>/ { printf "%s", $0; n = "\n" } /^>/ { print n $0; n = "" } END { printf "%s", n }' |  awk '(($0~/^>/)&&($0~/Contig/)){split($3,a,":"); if(a[2]<0.6) {print; getline; print}}' > new_contig.Coregonus.faa
+
+cat new.Coregonus.faa new_contig.Coregonus.faa > complete_forPANNZER2.fasta
+
+#download output from Pannzer2 (http://ekhidna2.biocenter.helsinki.fi/sanspanz/)
+wget http://ekhidna2.biocenter.helsinki.fi/barcosel/tmp//zQePIyf3j2y/anno.out
+wget http://ekhidna2.biocenter.helsinki.fi/barcosel/tmp//zQePIyf3j2y/DE.out
+wget http://ekhidna2.biocenter.helsinki.fi/barcosel/tmp//zQePIyf3j2y/GO.out
+
+#trim header off
+tail -n +2 GO.out > GO_noheader.txt
+#sort to get unique values for each gene in column 1 so we know how many genes have at least some GO annotation
+cut -f1 GO_noheader.txt | sort | uniq > Go_uniques.txt
+wc -l Go_uniques.txt
+#29046
+
+#####CHECK GENE and EXON length distributions of filtered 0.6 AED .gff file
+#extract exons from .gff file
+awk '{ if ($3 == "exon") { print } }' allr3_filt.gff > exons.txt
+
+#calculate the length of exons 
+for i in exons.txt; do
+    awk '{ print $5-$4; }' "$i" > exons_length_output.txt ;
+done
+
+wc -l exons_length_output.txt 
+#357479 
+
+#calculate the mean median mode of the exons
+awk '
+{
+     sum+=$1
+     a[x++]=$1
+     b[$1]++
+}
+b[$1]>Mode{Mode=$1}
+END{
+    print "Mean: " sum/x 
+    print "Median: "a[int((x-1)/2)] 
+    print "Mode: " Mode
+}' exons_length_output.txt
+
+#Mean: 196.711
+#Median: 135
+#Mode: 237
+
+#extract genes from .gff file
+awk '{ if ($3 == "gene") { print } }' allr3_filt.gff > genes.txt
+
+#calculate the length of exons 
+for i in genes.txt; do
+    awk '{ print $5-$4; }' "$i" > genes_length_output.txt ;
+done
+
+wc -l genes_length_output.txt 
+#44525
+
+#calculate the mean median mode of the exons
+awk '
+{
+     sum+=$1
+     a[x++]=$1
+     b[$1]++
+}
+b[$1]>Mode{Mode=$1}
+END{
+    print "Mean: " sum/x 
+    print "Median: "a[int((x-1)/2)] 
+    print "Mode: " Mode
+}' genes_length_output.txt
+
+#Mean: 11473.3
+#Median: 4850
+#Mode: 13682
+
+#calculate min/max values
+awk 'BEGIN {max = 0} {if ($1>max) max=$1} END {print max}' genes_length_output.txt
+#181605
+awk 'BEGIN {min = 99999999} {if ($1<min) min=$1} END {print min}' genes_length_output.txt
+#77
+
+awk 'BEGIN {max = 0} {if ($1>max) max=$1} END {print max}' exons_length_output.txt
+#17274
+awk 'BEGIN {min = 99999999} {if ($1<min) min=$1} END {print min}' exons_length_output.txt
+#2
+

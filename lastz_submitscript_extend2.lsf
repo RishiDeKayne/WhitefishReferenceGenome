@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#Example bsub command:
+#bsub -n1 -W 48:00 -N -u "rishi.de-kayne@eawag.ch" -J "lastz[1-3]%1" -R "rusage[mem=40000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/mapping/test.out < /cluster/home/rdekayne/Lastz/SymapTest/mapping/lastz_submitscript.lsf
+
+##====================================================================================================
+## load modules 
+module load java gdc gcc/4.8.2 gdc python/2.7.11 r/3.1.2
+
+##====================================================================================================
+##information for each symap block
+segment=${LSB_JOBINDEX}
+fromblock=$(cat /cluster/scratch/rdekayne/Lastz/SymapTest/from/from_fastas.txt | sed -n ${segment}p)
+toblock=$(cat /cluster/scratch/rdekayne/Lastz/SymapTest/to/to_fastas.txt | sed -n ${segment}p)
+
+##====================================================================================================
+
+#run lastz
+/cluster/apps/gdc/lastz/1.02/bin/lastz /cluster/scratch/rdekayne/Lastz/SymapTest/from/$fromblock".fasta" /cluster/scratch/rdekayne/Lastz/SymapTest/to/$toblock".fasta" --gfextend --nochain --nogapped --matchcount=100 --output=$segment".out" --format=general
+
+#get length of mapping/overlap by splitting column 14 
+cat $segment".out" | awk '{split($14,a,"/"); print a[1]}' > $segment".awktest.out"
+paste $segment".out" $segment".awktest.out" > $segment".withcov.out"
+rm $segment".out"
+rm $segment"awktest.out"
+#remove % sign to filter by percentage
+sed 's/%//g' $segment".withcov.out" > $segment".withcov.nopercent.out"
+rm $segment".withcov.out"
+#filter out alignments <1000 bp long
+awk '{ if ($16 >= 1000) print $0 }' $segment".withcov.nopercent.out" > $segment".withcov.nopercent_filtered.out"
+#calculate average across whole block
+cat $segment".withcov.nopercent_filtered.out" | awk '{sum+=$13} END { print "Average = ",sum/NR}' >> averages.out
+echo $segment >> averages.out
+mv $segment".withcov.nopercent_filtered.out" averageout_extend2/$segment".withcov.nopercent_filtered.out"

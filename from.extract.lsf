@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#Example bsub command:
+#bsub -n1 -W 48:00 -N -u "rishi.de-kayne@eawag.ch" -J "from_ext[1-3]%1" -R "rusage[mem=20000,scratch=10000] span[hosts=1]" -o /cluster/scratch/rdekayne/Lastz/SymapTest/from/from_ext_test.out < /cluster/home/rdekayne/Lastz/from_extract.lsf
+
+##====================================================================================================
+## load modules 
+module load java gdc gcc/4.8.2 gdc
+module load gdc java bedtools
+
+##====================================================================================================
+##information for each symap block
+segment=${LSB_JOBINDEX}
+bedinput=$(cat /cluster/scratch/rdekayne/Lastz/SymapTest/from/from.txt | sed -n ${segment}p)
+fastaoutput=$(cat /cluster/scratch/rdekayne/Lastz/SymapTest/from/from_fastas.txt | sed -n ${segment}p)
+inputfasta=$(cat /cluster/scratch/rdekayne/Lastz/SymapTest/from/input_fastas.txt | sed -n ${segment}p)
+##====================================================================================================
+
+echo $bedinput > $fastaoutput".txt"
+sed -i '1i#chrom\tstart\tend\tname' $fastaoutput".txt"
+awk -v OFS="\t" '$1=$1'  $fastaoutput".txt" > $fastaoutput"_tab.txt"
+bedtools getfasta -fi "/cluster/scratch/rdekayne/Lastz/SymapTest/chroms/"$inputfasta".fa" -bed $fastaoutput"_tab.txt" -fo /cluster/scratch/rdekayne/Lastz/SymapTest/from/$fastaoutput".fasta"

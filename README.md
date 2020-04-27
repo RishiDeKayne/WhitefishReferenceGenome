@@ -71,4 +71,6 @@ modified parameter files for round 2 and round 3 of maker
 ***
 
 ### Symap/sequence similarity
+- to.extract.lsf 
+- from.extract.lsf 
 - lastz_submitscript_extend2.lsf 

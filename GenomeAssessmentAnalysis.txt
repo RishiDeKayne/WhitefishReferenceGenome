@@ -931,10 +931,10 @@ bsub -n 1 -W 24:00 -R "rusage[mem=50000]" "module load java gdc gcc/4.8.2 gdc; \
 #-m "genomic DNA"
 
 #then validate	
-java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName rishidek@hotmail.com -password=CspAlbock*  -test -validate
+java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName username -password=password  -test -validate
 
 #and submit
-java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName rishidek@hotmail.com -password=CspAlbock*  -submit
+java -jar ../../../../Downloads/webin-cli-2.2.0.jar -context=genome -manifest=AWG_v2.manifest.txt -userName username -password=password  -submit
 
 
 #######

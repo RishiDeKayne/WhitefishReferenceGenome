@@ -1,5 +1,7 @@
 # WhitefishReferenceGenome
-Scripts used for Coregonus sp. "Balchen" genome assembly/analysis in De-Kayne, Zoller &amp; Feulner 2019
+Scripts used for Coregonus sp. "Balchen" genome assembly/analysis in De-Kayne, Zoller &amp; Feulner 2020
+
+If you use/adapt any of these scripts please cite the associated paper: https://onlinelibrary.wiley.com/doi/10.1111/1755-0998.13187
 
 For chromosome-scale scaffolds of wtdbg2 assembly see European Nucleotide Archive accession ERZ1303334 (formerly ERZ1030224) 
 Unscaffolded contigs (7815) are included here as two files: AWG_v1.unscaffolded1.fastq.gz and AWG_v1.unscaffolded2.fastq.gz

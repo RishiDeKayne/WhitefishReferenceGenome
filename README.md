@@ -27,15 +27,15 @@ Parameters/submission scripts are included for:
 - GenomeAssessmentAnalysis.txt - all commands run for estimation of genome size and analysis of each genome assembly 
   - cov.per.window.pl - for coverage analysis
   
-- PhaseSynteny_FR2.R - R script for coverage and synteny analysis of Falcon assembly
+- PhaseSynteny_FR2_MOLECOLRES.R - R script for coverage and synteny analysis of Falcon assembly
   - FalconR2ChromosomeLenghts.txt - falcon assembly chromosome lengths
   - SA_linkagemap_FalconR2PhaseMapped_Filtered.csv - mapping of SA linkage map to Falcon assembly
   
-- PhaseSynteny_CR2.R - R script for coverage and synteny analysis of Canu assembly
+- PhaseSynteny_CR2_MOLECOLRES.R - R script for coverage and synteny analysis of Canu assembly
   - CanuR2ChromosomeLenghts.txt - falcon assembly chromosome lengths
   - SA_linkagemap_CanuR2PhaseMapped_Filtered.csv - mapping of SA linkage map to Canu assembly
   
-- PhaseSynteny_WR2.R - R script for coverage and synteny analysis of wtdbg2 assembly
+- PhaseSynteny_WR2_MOLECOLRES.R - R script for coverage and synteny analysis of wtdbg2 assembly
   - wtdbg2ChromosomeLenghts.txt - falcon assembly chromosome lengths
   - SA_linkagemap_Wtdbg2PhaseMapped_Filtered.csv - mapping of SA linkage map to wtdbg2 assembly
   
